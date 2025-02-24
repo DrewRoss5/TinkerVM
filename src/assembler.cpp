@@ -75,3 +75,35 @@ Instruction Assembler::parse_inst(std::string& inst){
     return retval;
 
 }
+
+// parses a memory operation
+Instruction Assembler::parse_mem(uint8_t op_code, const std::vector<std::string>& operands){
+    if (operands.size() != 3)
+        throw std::runtime_error("invalid instruction");
+    uint8_t reg_byte = parse_reg(operands[0]);
+    // the last bit is a one if rhs is an immediate, otherwise it's a 0
+    uint8_t reg2;
+    uint64_t extend = 0x0;
+    switch (op_code & 0x01){
+    case 0:
+        // store the second register in the register bytes
+        reg2 = parse_reg(operands[2]);
+        reg_byte = merge_registers(reg_byte, reg2);
+        break;
+    case 1:
+        // parse rhs as an immediate
+        try{
+            extend = std::stol(operands[2]);
+        }
+        catch (std::invalid_argument){
+            throw std::runtime_error("invalid immediate value");
+        }
+        break;
+    }
+    // construct the instruction
+    Instruction retval;
+    retval.op_code = op_code;
+    retval.registers = reg_byte;
+    retval.extend = extend;
+    return retval;
+}
