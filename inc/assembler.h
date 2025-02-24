@@ -9,12 +9,17 @@
 
 #define NULL_INST 255
 
-enum op_types {MEM_OP = 0x00, 
-               LOGIC_OP = 0x10,
-               JUMP_OP = 0x20,
-               STACK_OP = 0x30,
-               IO_OP = 0x40
-            };
+enum op_types {
+    MEM_OP = 0x00, 
+    LOGIC_OP = 0x10,
+    JUMP_OP = 0x20,
+    STACK_OP = 0x30,
+    IO_OP = 0x40
+};
+enum stack_commands {
+    STACK_PUSH = 0x30,
+    STACK_POP = 0x31
+};
 
 std::vector<std::string> split_str(std::string& str);
 

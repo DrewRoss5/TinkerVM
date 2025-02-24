@@ -138,3 +138,25 @@ Instruction Assembler::parse_logic(uint8_t op_code, const std::vector<std::strin
     retval.extend = extend;
     return retval;
 }
+
+// parses a stack instruction
+Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::string>& operands){
+    if (operands.size() != 2)
+        throw std::runtime_error("invalid instruction");
+    Instruction retval;
+    retval.op_code = op_code;
+    // we ignore the instruction bit when comparing operation codes
+    switch (op_code & 0xfe){
+        case STACK_PUSH:
+            // determine if we are parsing pushing an immediate or register value
+            if (op_code & 0x01 == 1)
+                retval.extend = parse_immediate(operands[1]);
+            else
+                retval.extend = parse_reg(operands[1]);
+            break;
+        case STACK_POP:
+            retval.registers = parse_reg(operands[1]);
+        break;
+    }
+    return retval;
+}
