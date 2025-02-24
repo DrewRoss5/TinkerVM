@@ -20,9 +20,20 @@ enum stack_commands {
     STACK_PUSH = 0x30,
     STACK_POP = 0x31
 };
+enum data_types {
+    WORD,
+    STRINGZ,
+    STRING,
+    DATA,
+};
+// this stores th opcdoes for memory allocation operations that do not directly translate to an instruction
+enum allocation_ops{
+    ALLOC_MEM = 0x43,
+    ALLOC_STR
+};
 
 std::vector<std::string> split_str(std::string& str);
-
+ 
 class Assembler{
     public:
         Assembler() {}
@@ -30,12 +41,19 @@ class Assembler{
         uint8_t parse_reg(const std::string& reg);
         uint8_t merge_registers(uint8_t r1, uint8_t r2);
         uint64_t parse_immediate(const std::string& imm);
+        std::string parse_str_lit(std::string& str_lit, bool null_terminate);
+        Instruction parse_label(std::string& label);
         Instruction parse_inst(std::string& inst);
         Instruction parse_mem(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_logic(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_stack(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_io(uint8_t op_code, const std::vector<std::string>& operands);
     private:
+        size_t next_label {0};
+        size_t inst_no {0};
+        std::unordered_map<std::string, size_t> data_labels;
+        std::unordered_map<std::string, size_t> program_labels;
+        std::vector<std::string> program_strs;
         /* this associates each pneumonic with a bytecode instruction, the first element of
            the tuple represents the op-code and the second part represents the immediate flag 
            1 for immediate operations, 0 for not*/
@@ -78,6 +96,12 @@ class Assembler{
             {"puti",    {0x41, 0}},
             {"gets",    {0x42, 0}},
             {"geti",    {0x43, 0}}
+        };
+        std::unordered_map<std::string, int>  label_map{
+            {".word", WORD},
+            {".string", STRING},
+            {".stringz", STRINGZ},
+            {".data", DATA}
         };
 };
 

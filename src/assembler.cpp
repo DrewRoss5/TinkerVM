@@ -18,11 +18,16 @@ std::vector<std::string> split_str(std::string& str){
 
 // parses an operation and returns its 8-bit opcdoe
 uint8_t Assembler::parse_op(const std::string& op){
-    if (!this->op_map.count(op))
-        return NULL_INST;
+    if (!this->op_map.count(op)){
+        // determine this if this a label or invalid statement
+        if (op[op.size() - 1] == ':')
+            return NULL_INST;
+        throw std::runtime_error("invalid operation");
+    }
     // parse the opcode and add the immediate bit
     auto operation = this->op_map[op];
-    uint8_t retval = (operation.first << 1);
+    uint8_t retval = operation.first;
+    retval <<=
     retval |= (int) operation.second;
     return retval;
 }
@@ -53,11 +58,62 @@ uint64_t Assembler::parse_immediate(const std::string& imm){
         throw std::runtime_error("invalid immediate value");
     }
 }
+// parses a label declaration
+Instruction Assembler::parse_label(std::string& label){
+    Instruction retval;
+    std::vector<std::string> operands = split_str(label);
+    // if there is only one operand, we assume that this is a program label
+    if (operands.size() == 1){
+        this->program_labels[label] = this->inst_no;
+        retval.op_code = NULL_INST;
+        return retval;
+    }
+    // generate an instruction to allocate space for the data label
+    std::string name = operands[0];
+    auto label_itt = label_map.find(name);
+    if (label_itt  == label_map.end())
+        throw std::runtime_error("invalid label declaration");
+    int label_type = label_itt->second;
+    // determine the space to allocate based on the label type
+    std::string str_lit;
+    bool null_terminate;
+    uint64_t mem_size;
+    switch (label_type){
+        case WORD:
+            if (operands.size() != 1)
+                throw std::runtime_error("invalid label declaration");
+            retval.op_code = ALLOC_MEM;
+            retval.extend = 64;
+            data_labels[name] = this->next_label;
+            this->next_label++;
+            break;
+        case STRING:
+        case STRINGZ:
+            if (operands.size() != 2)
+                throw std::runtime_error("invalid label declaration");
+            null_terminate = (label_type == STRINGZ);
+            str_lit = parse_str_lit(operands[1], null_terminate);
+            this->program_strs.push_back(str_lit);
+            retval.op_code = ALLOC_STR;
+            retval.extend = program_strs.size() - 1;
+            data_labels[name] = this->next_label;
+            this->next_label++;
+            break;
+        case DATA:
+            if (operands.size() != 2)
+                throw std::runtime_error("invalid label declaration");
+            mem_size = parse_immediate(operands[1]);
+            retval.op_code = ALLOC_MEM;
+            retval.extend = mem_size;
+            break;
+    }
+    return retval;
+}
 
 // combines two four-bit registers into a single eight-bit  constant
 uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
     uint8_t retval = r1 << 4;
-    return r1 | r2;
+    return retval ^ r2;
 }
 
 // converts a pneumonic text insturction to a byte code instruction
@@ -65,8 +121,11 @@ uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
 Instruction Assembler::parse_inst(std::string& inst){
     std::vector<std::string> operands = split_str(inst);
     uint8_t op_code = this->parse_op(operands[0]);
-    uint8_t op_type = op_code & 0xE0; // left most three bits  
+    // if this is an unrecognized operation, treat it as a label
+    //if (op_code == NULL_INST)
+      //  return this->parse_label(operands[0]);
     // determine how to parse the instruction, based on it's type
+    uint8_t op_type = op_code & 0xE0; // left most three bits  
     Instruction retval;
     switch (op_type){
         case MEM_OP:
@@ -79,9 +138,10 @@ Instruction Assembler::parse_inst(std::string& inst){
             retval = parse_stack(op_code, operands);
             break;
         case IO_OP:
-            retval = parse_io(op_code, operands);
+            retval = parse_stack(op_code, operands);
             break;
     }
+    this->inst_no++;
     return retval;
 
 }
@@ -91,7 +151,6 @@ Instruction Assembler::parse_mem(uint8_t op_code, const std::vector<std::string>
     if (operands.size() != 3)
         throw std::runtime_error("invalid instruction");
     uint8_t reg_byte = parse_reg(operands[0]);
-    
     uint8_t reg2;
     uint64_t extend = 0x0;
     // the last bit is a one if rhs is an immediate, otherwise it's a 0
