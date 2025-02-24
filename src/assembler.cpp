@@ -44,6 +44,16 @@ uint8_t Assembler::parse_reg(const std::string& reg){
     return reg_no;
 }
 
+// parses an immediate value, and throws a std::runtime error if it's invalid
+uint64_t Assembler::parse_immediate(const std::string& imm){
+    try{
+        return std::stol(imm);
+    }
+    catch (std::invalid_argument){
+        throw std::runtime_error("invalid immediate value");
+    }
+}
+
 // combines two four-bit registers into a single eight-bit  constant
 uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
     uint8_t retval = r1 << 4;
@@ -81,26 +91,47 @@ Instruction Assembler::parse_mem(uint8_t op_code, const std::vector<std::string>
     if (operands.size() != 3)
         throw std::runtime_error("invalid instruction");
     uint8_t reg_byte = parse_reg(operands[0]);
-    // the last bit is a one if rhs is an immediate, otherwise it's a 0
+    
     uint8_t reg2;
     uint64_t extend = 0x0;
+    // the last bit is a one if rhs is an immediate, otherwise it's a 0
     switch (op_code & 0x01){
-    case 0:
-        // store the second register in the register bytes
-        reg2 = parse_reg(operands[2]);
-        reg_byte = merge_registers(reg_byte, reg2);
-        break;
-    case 1:
-        // parse rhs as an immediate
-        try{
-            extend = std::stol(operands[2]);
-        }
-        catch (std::invalid_argument){
-            throw std::runtime_error("invalid immediate value");
-        }
-        break;
+        case 0:
+            // store the second register in the register byte
+            reg2 = parse_reg(operands[2]);
+            reg_byte = merge_registers(reg_byte, reg2);
+            break;
+        case 1:
+            extend = parse_immediate(operands[2]);
+            break;
     }
     // construct the instruction
+    Instruction retval;
+    retval.op_code = op_code;
+    retval.registers = reg_byte;
+    retval.extend = extend;
+    return retval;
+}
+
+// parses a logical/arithmetic expression 
+Instruction Assembler::parse_logic(uint8_t op_code, const std::vector<std::string>& operands){
+    // ensure four opperands are included (opcode, dst, lhs, rhs)
+    if (operands.size() != 4)
+        throw std::runtime_error("invalid instruction");
+    // the first two operands must be registers
+    uint8_t reg1 = parse_reg(operands[1]);
+    uint8_t reg2 = parse_reg(operands[2]);
+    uint8_t reg_byte = merge_registers(reg1, reg2);
+    uint64_t extend;
+     // the last bit is a one if rhs is an immediate, otherwise it's a 0
+    switch (op_code & 0x01){
+        case 0:
+            extend = parse_reg(operands[3]);
+            break;
+        case 1:
+            extend = parse_immediate(operands[3]);
+            break;
+    }
     Instruction retval;
     retval.op_code = op_code;
     retval.registers = reg_byte;

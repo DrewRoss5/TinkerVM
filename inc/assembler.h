@@ -24,6 +24,7 @@ class Assembler{
         uint8_t parse_op(const std::string& op);
         uint8_t parse_reg(const std::string& reg);
         uint8_t merge_registers(uint8_t r1, uint8_t r2);
+        uint64_t parse_immediate(const std::string& imm);
         Instruction parse_inst(std::string& inst);
         Instruction parse_mem(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_logic(uint8_t op_code, const std::vector<std::string>& operands);
