@@ -23,7 +23,7 @@ uint8_t Assembler::parse_op(const std::string& op){
     // parse the opcode and add the immediate bit
     auto operation = this->op_map[op];
     uint8_t retval = (operation.first << 1);
-    retval ^= (int) operation.second;
+    retval |= (int) operation.second;
     return retval;
 }
 
@@ -47,7 +47,7 @@ uint8_t Assembler::parse_reg(const std::string& reg){
 // combines two four-bit registers into a single eight-bit  constant
 uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
     uint8_t retval = r1 << 4;
-    return r1 ^ r2;
+    return r1 | r2;
 }
 
 // converts a pneumonic text insturction to a byte code instruction
@@ -55,7 +55,7 @@ uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
 Instruction Assembler::parse_inst(std::string& inst){
     std::vector<std::string> operands = split_str(inst);
     uint8_t op_code = this->parse_op(operands[0]);
-    uint8_t op_type = op_code ^ 0xE0; // left most three bits  
+    uint8_t op_type = op_code & 0xE0; // left most three bits  
     // determine how to parse the instruction, based on it's type
     Instruction retval;
     switch (op_type){
