@@ -110,6 +110,13 @@ Instruction Assembler::parse_label(std::string& label){
     return retval;
 }
 
+uint64_t Assembler::parse_jmp_label(std::string& label){
+    auto itt = this->program_labels.find(label);
+    if (itt == this->program_labels.end())
+        throw std::runtime_error("invalid jump destination");
+    return itt->second;
+}
+
 // combines two four-bit registers into a single eight-bit  constant
 uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
     uint8_t retval = r1 << 4;
@@ -130,6 +137,9 @@ Instruction Assembler::parse_inst(std::string& inst){
     switch (op_type){
         case MEM_OP:
             retval = parse_mem(op_code, operands);
+            break;
+        case JUMP_OP:
+            retval = parse_jump(op_code, operands);
             break;
         case LOGIC_OP:
             retval = parse_logic(op_code, operands);
@@ -216,6 +226,38 @@ Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::strin
         case STACK_POP:
             retval.registers = parse_reg(operands[1]);
         break;
+    }
+    return retval;
+}
+
+// parses a jump or function call instruction
+Instruction Assembler::parse_jump(uint8_t op_code, const std::vector<std::string>& operands){
+    Instruction retval;
+    retval.op_code = op_code; 
+    std::string tmp;
+    uint8_t r1, r2;
+    switch (op_code & 0xfe){
+        case JUMP:
+        case CAL:
+            if (operands.size() != 2)
+                throw std::runtime_error("invalid instruction");
+            tmp = operands[1];
+            retval.extend = parse_jmp_label(tmp);
+            break;
+        case JEQ:
+        case JNE:
+        case JLT:
+        case JGT:
+            // should have the opcode, two registers, and a destination
+            if (operands.size() != 4)
+                throw std::runtime_error("invalid instruction");
+            r1 = parse_reg(operands[1]);
+            r2 = parse_reg(operands[2]);
+            retval.registers = merge_registers(r1, r2);
+            tmp = operands[3];
+            retval.extend = parse_jmp_label(tmp);
+        case RET:
+            break;
     }
     return retval;
 }

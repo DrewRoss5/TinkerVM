@@ -26,11 +26,20 @@ enum data_types {
     STRING,
     DATA,
 };
-// this stores th opcdoes for memory allocation operations that do not directly translate to an instruction
-enum allocation_ops{
-    ALLOC_MEM = 0x43,
-    ALLOC_STR
+/* this is a non-exaustive list of op codes that are used in swithc cases, or otherwise
+    need to be externally referenced. */
+enum op_codes{
+    ALLOC_MEM = 0x03,
+    ALLOC_STR,
+    JUMP = 0x20,
+    JEQ,
+    JNE,
+    JGT,
+    JLT,
+    CAL,
+    RET
 };
+
 
 std::vector<std::string> split_str(std::string& str);
  
@@ -41,12 +50,14 @@ class Assembler{
         uint8_t parse_reg(const std::string& reg);
         uint8_t merge_registers(uint8_t r1, uint8_t r2);
         uint64_t parse_immediate(const std::string& imm);
+        uint64_t parse_jmp_label(std::string& label);
         std::string parse_str_lit(std::string& str_lit, bool null_terminate);
         Instruction parse_label(std::string& label);
         Instruction parse_inst(std::string& inst);
         Instruction parse_mem(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_logic(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_stack(uint8_t op_code, const std::vector<std::string>& operands);
+        Instruction parse_jump(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_io(uint8_t op_code, const std::vector<std::string>& operands);
     private:
         size_t next_label {0};
