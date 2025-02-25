@@ -9,7 +9,7 @@ std::vector<std::string> split_str(std::string& str){
         size_t space_index = str.find(" ");
         while (str.size() && space_index != str.npos){
             retval.push_back(str.substr(0, space_index));
-            str = str.substr(space_index);
+            str = str.substr(space_index+1);
         }
         if (str.size())
             retval.push_back(str);
@@ -27,7 +27,7 @@ uint8_t Assembler::parse_op(const std::string& op){
     // parse the opcode and add the immediate bit
     auto operation = this->op_map[op];
     uint8_t retval = operation.first;
-    retval <<=
+    retval <<= 1;
     retval |= (int) operation.second;
     return retval;
 }
@@ -148,7 +148,7 @@ Instruction Assembler::parse_inst(std::string& inst){
             retval = parse_stack(op_code, operands);
             break;
         case IO_OP:
-            retval = parse_stack(op_code, operands);
+            retval = parse_io(op_code, operands);
             break;
     }
     this->inst_no++;
@@ -218,7 +218,7 @@ Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::strin
     switch (op_code & 0xfe){
         case STACK_PUSH:
             // determine if we are parsing pushing an immediate or register value
-            if (op_code & 0x01 == 1)
+            if ((op_code & 0x01) == 1)
                 retval.extend = parse_immediate(operands[1]);
             else
                 retval.extend = parse_reg(operands[1]);
@@ -259,5 +259,17 @@ Instruction Assembler::parse_jump(uint8_t op_code, const std::vector<std::string
         case RET:
             break;
     }
+    return retval;
+}
+
+// parses an IO operation
+Instruction Assembler::parse_io(uint8_t op_code, const std::vector<std::string>& operands){
+    // all IO operations take a single register, so this parsing logic is universal
+    Instruction retval;
+    retval.op_code = op_code;
+    if (operands.size() != 2)
+        throw std::runtime_error("invalid io operation");
+    uint8_t dst_reg = parse_reg(operands[1]);
+    retval.registers = dst_reg;
     return retval;
 }
