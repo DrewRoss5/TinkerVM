@@ -17,17 +17,13 @@ int main(){
     Assembler assembler;
     std::string tmp;
     try{
-        tmp = "loada r8 my_label";
-        assembler.parse_inst(tmp);
+        assembler.parse_inst("loada r7 other_label");
     }
     catch (std::runtime_error e){
         std::cout << "Error message: "  << e.what() << std::endl;
     }
-    tmp = "my_label: .word";
-    assembler.parse_inst(tmp);
-    tmp = "other_label: .data 16";
-    assembler.parse_inst(tmp);
-    tmp = "loada r7 other_label";
+    assembler.parse_inst("my_label: .word");
+    assembler.parse_inst("other_label: .data 16");
     // should output 0a070000000000000001
-    print_inst(assembler.parse_inst(tmp)); 
+    print_inst(assembler.parse_inst("loada r7 other_label")); 
 }

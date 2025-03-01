@@ -92,7 +92,7 @@ Instruction Assembler::parse_label(const std::string& label){
     label_name = label_name.substr(0, label_name.size() - 1);
     // if there is no size specificiation, we assume that this is a program label
     if (operands.size() == 1){
-        this->program_labels[label_name] = this->inst_no;
+        this->program_labels[label_name] = this->line_no;
         retval.op_code = NULL_INST;
         return retval;
     }
@@ -132,6 +132,7 @@ Instruction Assembler::parse_label(const std::string& label){
             retval.extend = mem_size;
             break;
     }
+    this->line_no++;
     this->data_labels[label_name] = this->next_label;
     return retval;
 }
@@ -157,7 +158,7 @@ uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
 }
 
 // converts a pneumonic text insturction to a byte code instruction
-Instruction Assembler::parse_inst(std::string& inst){
+Instruction Assembler::parse_inst(const std::string& inst){
     try{
         std::vector<std::string> operands = split_str(inst);
         uint8_t op_code = this->parse_op(operands[0]);
@@ -184,12 +185,12 @@ Instruction Assembler::parse_inst(std::string& inst){
                 retval = parse_io(op_code, operands);
                 break;
         }
-        this->inst_no++;
+        this->line_no++;
         return retval;
     }
     catch (std::runtime_error e){
         std::stringstream error_msg;
-        error_msg << "Error on line " << this->inst_no + 1 << ": " << e.what();
+        error_msg << "Error on line " << this->line_no + 1 << ": " << e.what();
         throw std::runtime_error(error_msg.str());
     }
 }
