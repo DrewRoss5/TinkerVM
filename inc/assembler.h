@@ -31,6 +31,7 @@ enum data_types {
 enum op_codes{
     ALLOC_MEM = 0x03,
     ALLOC_STR,
+    LOAD_ADDR,
     JUMP = 0x20,
     JEQ,
     JNE,
@@ -41,7 +42,8 @@ enum op_codes{
 };
 
 
-std::vector<std::string> split_str(std::string& str);
+std::vector<std::string> split_str(const std::string& str);
+std::string parse_str_lit(std::string& str_lit, bool null_terminate);
  
 class Assembler{
     public:
@@ -50,9 +52,9 @@ class Assembler{
         uint8_t parse_reg(const std::string& reg);
         uint8_t merge_registers(uint8_t r1, uint8_t r2);
         uint64_t parse_immediate(const std::string& imm);
-        uint64_t parse_jmp_label(std::string& label);
-        std::string parse_str_lit(std::string& str_lit, bool null_terminate);
-        Instruction parse_label(std::string& label);
+        uint64_t parse_jmp_label(const std::string& label);
+        uint64_t parse_data_label(const std::string& label);
+        Instruction parse_label(const std::string& label);
         Instruction parse_inst(std::string& inst);
         Instruction parse_mem(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_logic(uint8_t op_code, const std::vector<std::string>& operands);
@@ -74,6 +76,7 @@ class Assembler{
             {"stori",   {0x01, 1}},
             {"load",    {0x02, 0}},
             {"loadi",   {0x02, 1}},
+            {"loada",   {0x05, 0}},
             {"add",     {0x10, 0}},
             {"addi",    {0x10, 1}},
             {"sub",     {0x11, 0}},
@@ -84,7 +87,7 @@ class Assembler{
             {"divi",    {0x13, 1}},
             {"rem",     {0x16, 0}},
             {"remi",    {0x16, 1}},
-            {"cmp",     {0x17, 0}},
+            {"comp",    {0x17, 0}},
             {"and",     {0x18, 0}},
             {"andi",    {0x18, 1}},
             {"or",      {0x19, 0}},
@@ -108,7 +111,7 @@ class Assembler{
             {"gets",    {0x42, 0}},
             {"geti",    {0x43, 0}}
         };
-        std::unordered_map<std::string, int>  label_map{
+        std::unordered_map<std::string, int> type_map{
             {".word", WORD},
             {".string", STRING},
             {".stringz", STRINGZ},
