@@ -48,6 +48,8 @@ std::string parse_str_lit(std::string& str_lit, bool null_terminate);
 class Assembler{
     public:
         Assembler() {}
+        Instruction parse_inst(const std::string& inst);
+    private:
         uint8_t parse_op(const std::string& op);
         uint8_t parse_reg(const std::string& reg);
         uint8_t merge_registers(uint8_t r1, uint8_t r2);
@@ -55,13 +57,11 @@ class Assembler{
         uint64_t parse_jmp_label(const std::string& label);
         uint64_t parse_data_label(const std::string& label);
         Instruction parse_label(const std::string& label);
-        Instruction parse_inst(const std::string& inst);
         Instruction parse_mem(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_logic(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_stack(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_jump(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_io(uint8_t op_code, const std::vector<std::string>& operands);
-    private:
         size_t next_label {0};
         size_t line_no {0};
         std::unordered_map<std::string, size_t> data_labels;
