@@ -27,6 +27,9 @@ int main(){
     // test jump commands
     print_inst(assembler.parse_inst("j lab_1"));                  // "40000000000000000004"
     print_inst(assembler.parse_inst("jeq r12 r13 lab_1"));        // "42cd0000000000000004"
+    // test stack commands
+    print_inst(assembler.parse_inst("pop r8"));                   // "62080000000000000000"
+    print_inst(assembler.parse_inst("pushi 65535"));              // "6100000000000000ffff"
 
 
 }

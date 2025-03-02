@@ -262,17 +262,23 @@ Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::strin
     Instruction retval;
     retval.op_code = op_code;
     // we ignore the instruction bit when comparing operation codes
-    switch (op_code & 0xfe){
+    uint8_t op_type = (op_code & 0xfe) >> 1;
+    switch (op_type){
         case STACK_PUSH:
             // determine if we are parsing pushing an immediate or register value
-            if ((op_code & 0x01) == 1)
+            if (op_type){
+                retval.registers = 0;
                 retval.extend = parse_immediate(operands[1]);
-            else
+            }
+            else{
                 retval.registers = parse_reg(operands[1]);
+                retval.extend = 0;
+            }
             break;
         case STACK_POP:
             retval.registers = parse_reg(operands[1]);
-        break;
+            retval.extend = 0;
+            break;
     }
     return retval;
 }
