@@ -159,7 +159,7 @@ uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
 }
 
 // converts a pneumonic text insturction to a byte code instruction
-Instruction Assembler::parse_inst(const std::string& inst){
+Instruction Assembler::assemble_inst(const std::string& inst){
     try{
         std::vector<std::string> operands = split_str(inst);
         uint8_t op_code = this->parse_op(operands[0]);

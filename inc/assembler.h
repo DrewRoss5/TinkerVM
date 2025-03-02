@@ -48,7 +48,8 @@ std::string parse_str_lit(std::string& str_lit, bool null_terminate);
 class Assembler{
     public:
         Assembler() {}
-        Instruction parse_inst(const std::string& inst);
+        void assemble_file(const std::string& in_path, const std::string& outpath);
+        Instruction assemble_inst(const std::string& inst);
     private:
         uint8_t parse_op(const std::string& op);
         uint8_t parse_reg(const std::string& reg);

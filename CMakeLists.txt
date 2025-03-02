@@ -5,5 +5,6 @@ add_executable(tvm
     inc/assembler.h
     inc/instruction.h
     src/assembler.cpp
+    src/instruction.cpp
     src/main.cpp
 )
