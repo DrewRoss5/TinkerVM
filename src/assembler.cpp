@@ -43,14 +43,15 @@ std::string parse_str_lit(std::string& str_lit, bool null_terminate){
 
 // parses an operation and returns its 8-bit opcdoe
 uint8_t Assembler::parse_op(const std::string& op){
-    if (!this->op_map.count(op)){
+    auto op_itt = op_map.find(op);
+    if (op_itt == op_map.end()){
         // determine this if this a label or invalid statement
         if (op[op.size() - 1] == ':')
             return NULL_INST;
         throw std::runtime_error("invalid operation");
     }
     // parse the opcode and add the immediate bit
-    auto operation = this->op_map[op];
+    auto operation = op_itt->second;
     uint8_t retval = operation.first;
     retval <<= 1;
     retval |= (int) operation.second;
@@ -166,17 +167,17 @@ Instruction Assembler::parse_inst(const std::string& inst){
         if (op_code == NULL_INST)
             return this->parse_label(inst);
         // determine how to parse the instruction, based on it's type
-        uint8_t op_type = op_code & 0xE0; // left most three bits  
+        uint8_t op_type = (op_code & 0xE0) >> 1; // left most three bits  
         Instruction retval;
         switch (op_type){
             case MEM_OP:
                 retval = parse_mem(op_code, operands);
                 break;
-            case JUMP_OP:
-                retval = parse_jump(op_code, operands);
-                break;
             case LOGIC_OP:
                 retval = parse_logic(op_code, operands);
+                break;
+            case JUMP_OP:
+                retval = parse_jump(op_code, operands);
                 break;
             case STACK_OP:
                 retval = parse_stack(op_code, operands);
@@ -232,7 +233,7 @@ Instruction Assembler::parse_mem(uint8_t op_code, const std::vector<std::string>
 Instruction Assembler::parse_logic(uint8_t op_code, const std::vector<std::string>& operands){
     // ensure four opperands are included (opcode, dst, lhs, rhs)
     if (operands.size() != 4)
-        throw std::runtime_error("invalid instruction");
+        throw std::runtime_error("invalid instruction. Opperation expects four operands");
     // the first two operands must be registers
     uint8_t reg1 = parse_reg(operands[1]);
     uint8_t reg2 = parse_reg(operands[2]);
@@ -281,12 +282,13 @@ Instruction Assembler::parse_jump(uint8_t op_code, const std::vector<std::string
     Instruction retval;
     retval.op_code = op_code; 
     uint8_t r1, r2;
-    switch (op_code & 0xfe){
+    switch ((op_code & 0xfe) >> 1){
         case JUMP:
         case CAL:
             if (operands.size() != 2)
                 throw std::runtime_error("invalid instruction");
             retval.extend = parse_jmp_label(operands[1]);
+            retval.registers = 0;
             break;
         case JEQ:
         case JNE:
@@ -299,6 +301,7 @@ Instruction Assembler::parse_jump(uint8_t op_code, const std::vector<std::string
             r2 = parse_reg(operands[2]);
             retval.registers = merge_registers(r1, r2);
             retval.extend = parse_jmp_label(operands[3]);
+            break;
         case RET:
             break;
     }

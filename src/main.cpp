@@ -15,15 +15,18 @@ void print_inst(const Instruction& inst){
 
 int main(){
     Assembler assembler;
-    std::string tmp;
-    try{
-        assembler.parse_inst("loada r7 other_label");
-    }
-    catch (std::runtime_error e){
-        std::cout << "Error message: "  << e.what() << std::endl;
-    }
-    assembler.parse_inst("my_label: .word");
-    assembler.parse_inst("other_label: .data 16");
-    // should output 0a070000000000000001
-    print_inst(assembler.parse_inst("loada r7 other_label")); 
+    Instruction inst; 
+    // test a memory exprssions
+    print_inst(assembler.parse_inst("copy r9 r10"));            // "009a0000000000000000"
+    print_inst(assembler.parse_inst("loadi r9 255"));           // "050900000000000000ff"
+    // test logical/arithmetic expresions
+    print_inst(assembler.parse_inst("or r11 r12 r13"));         // "38bc000000000000000d"
+    print_inst(assembler.parse_inst("addi r9 r9 16"));          // "21990000000000000010"
+    // declare a label to jump to
+    assembler.parse_inst("lab_1:");
+    // test jump commands
+    print_inst(assembler.parse_inst("j lab_1"));                  // "40000000000000000004"
+    print_inst(assembler.parse_inst("jeq r12 r13 lab_1"));        // "42cd0000000000000004"
+
+
 }
