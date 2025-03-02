@@ -1,4 +1,3 @@
-#include <iostream>
 #include "../inc/instruction.h"
 
 std::array<uint8_t, 10> Instruction::to_bytes(){
@@ -14,5 +13,19 @@ std::array<uint8_t, 10> Instruction::to_bytes(){
         retval[i] = (extend & mask_val) >> shift_val;
         mask_val >>= 8;
     }
+    return retval;
+}
+
+Instruction Instruction::from_bytes(const std::array<uint8_t, 10>& arr){
+    Instruction retval;
+    // read the opcode and registers
+    retval.op_code = arr[0];
+    retval.registers = arr[1];
+    retval.extend = 0;
+    // read the extend from bytes
+    for (int i = 2; i < 10; i++){
+        int shift_val = 8 * (9 - i);
+        retval.extend += arr[i] << shift_val;
+    } 
     return retval;
 }
