@@ -1,0 +1,4 @@
+loadi r7 0
+loadi r8 10
+add r9 r7 r8 
+puti r9

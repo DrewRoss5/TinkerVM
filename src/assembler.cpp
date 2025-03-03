@@ -1,8 +1,11 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 #include "../inc/assembler.h"
+
+#define INSTRUCTION_BYTES 10
 
 // splits a string by spaces and returns each "word"
 std::vector<std::string> split_str(const std::string& str){
@@ -22,7 +25,7 @@ std::vector<std::string> split_str(const std::string& str){
 // parses a string literal, and optionally appends null termination
 std::string parse_str_lit(std::string& str_lit, bool null_terminate){
     if (str_lit[0] != '"')
-        throw std::runtime_error("invalid string literal");
+        throw std::runtime_error("invalid string literal: no opening quotation");
     size_t pos = 1;
     size_t str_len = str_lit.size();
     bool closed =  false;
@@ -34,9 +37,12 @@ std::string parse_str_lit(std::string& str_lit, bool null_terminate){
             break;
         }
         out.push_back(chr);
+        pos++;
     }
     if (!closed)
-        throw std::runtime_error("invalid string literal");
+        throw std::runtime_error("invalid string literal: no closing quotation");
+    if (null_terminate)
+        out.push_back('\0');
     return out;
 }
 
@@ -95,6 +101,7 @@ Instruction Assembler::parse_label(const std::string& label){
     if (operands.size() == 1){
         this->program_labels[label_name] = this->line_no;
         retval.op_code = NULL_INST;
+        this->line_no++;
         return retval;
     }
     // generate an instruction to allocate space for the data label
@@ -116,10 +123,16 @@ Instruction Assembler::parse_label(const std::string& label){
             break;
         case STRING:
         case STRINGZ:
-            if (operands.size() != 3)
+            if (operands.size() < 3)
                 throw std::runtime_error("invalid label declaration");
+            // append all operands after the thrid to the third
+            for (int i = 3; i < operands.size(); i++){
+                operands[2] += operands[i];
+            }
             null_terminate = (label_type == STRINGZ);
             str_lit = parse_str_lit(operands[2], null_terminate);
+            
+            // parse the string and create the instruction
             this->program_strs.push_back(str_lit);
             retval.op_code = ALLOC_STR;
             retval.extend = program_strs.size() - 1;
@@ -158,6 +171,34 @@ uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
     return retval ^ r2;
 }
 
+// converts an tinker assembly file to a byte code file to be exewcuted
+void Assembler::assemble_file(const std::string& in_path, const std::string& out_path){
+    // read the input file
+    std::ifstream in(in_path);
+    if (!in.good())
+        throw std::runtime_error("Error: failed to read the input file");
+    std::vector<Instruction> instructions;
+    std::string buf;
+    while (std::getline(in, buf)){
+        Instruction inst = assemble_inst(buf);
+        instructions.push_back(inst);
+    }
+    in.close();
+    // store all program strings to the file
+    std::ofstream out(out_path, std::ios::binary);
+    size_t string_count = this->program_strs.size();
+    for (int i = 0; i < string_count; i++)
+        out << '"' << program_strs[i] << '"';
+    out << '\0';
+    // store the bytecode to the output file
+    size_t instruction_count = instructions.size();
+    for (int i = 0; i < instruction_count; i++){
+        uint8_t* byte_buf = instructions[i].to_bytes().data();
+        out.write(reinterpret_cast<const char*>(byte_buf), INSTRUCTION_BYTES);
+    }
+    out.close();
+}
+
 // converts a pneumonic text insturction to a byte code instruction
 Instruction Assembler::assemble_inst(const std::string& inst){
     try{
@@ -191,7 +232,7 @@ Instruction Assembler::assemble_inst(const std::string& inst){
     }
     catch (std::runtime_error e){
         std::stringstream error_msg;
-        error_msg << "Error on line " << this->line_no + 1 << ": " << e.what();
+        error_msg << "Syntax error on line " << this->line_no + 1 << ": " << e.what();
         throw std::runtime_error(error_msg.str());
     }
 }
@@ -233,7 +274,7 @@ Instruction Assembler::parse_mem(uint8_t op_code, const std::vector<std::string>
 Instruction Assembler::parse_logic(uint8_t op_code, const std::vector<std::string>& operands){
     // ensure four opperands are included (opcode, dst, lhs, rhs)
     if (operands.size() != 4)
-        throw std::runtime_error("invalid instruction. Opperation expects four operands");
+        throw std::runtime_error("invalid instruction. Operation expects four operands");
     // the first two operands must be registers
     uint8_t reg1 = parse_reg(operands[1]);
     uint8_t reg2 = parse_reg(operands[2]);
@@ -319,6 +360,7 @@ Instruction Assembler::parse_io(uint8_t op_code, const std::vector<std::string>&
     // all IO operations take a single register, so this parsing logic is universal
     Instruction retval;
     retval.op_code = op_code;
+    retval.extend = 0;
     if (operands.size() != 2)
         throw std::runtime_error("invalid io operation");
     uint8_t dst_reg = parse_reg(operands[1]);

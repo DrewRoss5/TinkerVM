@@ -15,12 +15,6 @@ void print_inst(const Instruction& inst){
 
 int main(){
     Assembler assembler;
-    Instruction inst;
-    inst = assembler.assemble_inst("loadi r9 165301");
-    std::array<uint8_t, 10> arr = inst.to_bytes();
-    for (int i = 0; i < 10; i++)
-        std::cout << to_hex(arr[i]);
-    std::cout << std::endl;
-    print_inst(Instruction::from_bytes(arr));
-    print_inst(assembler.assemble_inst("loadi r9 165301"));
+    assembler.assemble_file("../examples/test1.tasm", "out1.tcode");
+    assembler.assemble_file("../examples/test2.tasm", "out2.tcode");
 }
