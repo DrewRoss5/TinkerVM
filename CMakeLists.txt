@@ -4,7 +4,10 @@ project(TinkerVM VERSION 0.1.0)
 add_executable(tvm
     inc/assembler.h
     inc/instruction.h
+    inc/util.hpp
+    inc/stack.hpp
     src/assembler.cpp
     src/instruction.cpp
+    src/stack.cpp
     src/main.cpp
 )

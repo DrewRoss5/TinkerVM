@@ -1,3 +1,6 @@
+#ifndef INSTRUCTION_H
+#define INSTUCTION_H
+
 #include <stdint.h>
 #include <array>
 
@@ -8,3 +11,5 @@ struct Instruction{
     std::array<uint8_t, 10> to_bytes();
     static Instruction from_bytes(const std::array<uint8_t, 10>& arr);
 };
+
+#endif
