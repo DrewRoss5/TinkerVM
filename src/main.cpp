@@ -3,6 +3,7 @@
 
 #include "../inc/assembler.h"
 #include "../inc/stack.hpp"
+#include "../inc/machine.h"
 
 template <typename T>
 std::string to_hex(T in){
@@ -16,31 +17,13 @@ void print_inst(const Instruction& inst){
 }
 
 int main(){
-    // simple test of stack functions
-    uint32_t num = 666;
-    uint32_t n1 = 1024;
-    uint16_t n2 = 64;
-    Stack stack;
-    // test a single push/pop operation
-    stack.push(num);
-    std::cout << "Testing single operation: " << std::endl;
-    std::cout << '\t' << (stack.is_empty() ? "true" : "false") << std::endl; // false
-    std::cout << '\t' << stack.size() << std::endl;                         // 5
-    std::cout << '\t' << stack.pop_type<uint32_t>() << std::endl;           // 666
-    std::cout << '\t' << (stack.is_empty() ? "true" : "false") << std::endl; // true 
-    std::cout << '\t' << stack.size() << std::endl;                          // 0
-    // test pushing and popping with values of multiple sizes
-    std::cout << "Testing mutliple operations" << std::endl;
-    stack.push(n1);
-    stack.push(n2);
-    std::cout << '\t' << stack.size() << std::endl;                         // 8
-    std::cout << '\t' << stack.pop_type<uint16_t>() << std::endl;           // 64
-    std::cout << '\t' << stack.pop_type<uint32_t>() << std::endl;           // 1024
-    std::cout << '\t' << (stack.is_empty() ? "true" : "false") << std::endl; // true 
-    std::cout << '\t' << stack.size() << std::endl;                          // 0    
-    /*
     Assembler assembler;
-    assembler.assemble_file("../examples/test1.tasm", "out1.tcode");
-    assembler.assemble_file("../examples/test2.tasm", "out2.tcode");
-    */
+    Machine vm;
+    assembler.assemble_file("../examples/memtest.tasm", "memtest.tcode");
+    vm.exec_file("memtest.tcode");
+    std::cout << "Memory test. This should print '10' twice, followed by '1234'" << std::endl;
+    std::cout << '\t' << vm.get_register(7) << std::endl;
+    std::cout << '\t' << vm.get_register(8) << std::endl;
+    std::cout << '\t' << vm.get_register(12) << std::endl;
+    return 0;
 }

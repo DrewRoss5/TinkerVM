@@ -9,38 +9,6 @@
 
 #define NULL_INST 255
 
-enum op_types {
-    MEM_OP = 0x00, 
-    LOGIC_OP = 0x10,
-    JUMP_OP = 0x20,
-    STACK_OP = 0x30,
-    IO_OP = 0x40
-};
-enum stack_commands {
-    STACK_PUSH = 0x30,
-    STACK_POP = 0x31
-};
-enum data_types {
-    WORD,
-    STRINGZ,
-    STRING,
-    DATA,
-};
-/* this is a non-exaustive list of op codes that are used in swithc cases, or otherwise
-    need to be externally referenced. */
-enum op_codes{
-    ALLOC_MEM = 0x03,
-    ALLOC_STR,
-    LOAD_ADDR,
-    JUMP = 0x20,
-    JEQ,
-    JNE,
-    JGT,
-    JLT,
-    CAL,
-    RET
-};
-
 
 std::vector<std::string> split_str(const std::string& str);
 std::string parse_str_lit(std::string& str_lit, bool null_terminate);
@@ -73,11 +41,14 @@ class Assembler{
            1 for immediate operations, 0 for not*/
         std::unordered_map<std::string, std::pair<uint8_t, bool> > op_map{
             {"copy",    {0x00, 0}},
-            {"store",   {0x01, 0}},
-            {"stori",   {0x01, 1}},
-            {"load",    {0x02, 0}},
-            {"loadi",   {0x02, 1}},
-            {"loada",   {0x05, 0}},
+            {"stow",    {0x01, 0}},
+            {"stowi",   {0x01, 1}},
+            {"stob",    {0x02, 0}},
+            {"stobi",   {0x02, 1}},
+            {"loadw",   {0x03, 0}},
+            {"loadi",   {0x03, 1}},
+            {"loadb",   {0x04, 0}},
+            {"loada",   {0x07, 0}},
             {"add",     {0x10, 0}},
             {"addi",    {0x10, 1}},
             {"sub",     {0x11, 0}},

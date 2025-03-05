@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <cstring>
 
 #include "../inc/assembler.h"
 
@@ -117,7 +118,7 @@ Instruction Assembler::parse_label(const std::string& label){
         case WORD:
             if (operands.size() != 2)
                 throw std::runtime_error("invalid label declaration");
-            retval.op_code = ALLOC_MEM;
+            retval.op_code = ALLOC_MEM << 1;
             retval.extend = 64;
             this->next_label++;
             break;
@@ -134,7 +135,7 @@ Instruction Assembler::parse_label(const std::string& label){
             
             // parse the string and create the instruction
             this->program_strs.push_back(str_lit);
-            retval.op_code = ALLOC_STR;
+            retval.op_code = ALLOC_STR << 1;
             retval.extend = program_strs.size() - 1;
             this->next_label++;
             break;
@@ -142,7 +143,7 @@ Instruction Assembler::parse_label(const std::string& label){
             if (operands.size() != 3)
                 throw std::runtime_error("invalid label declaration");
             mem_size = parse_immediate(operands[2]);
-            retval.op_code = ALLOC_MEM;
+            retval.op_code = ALLOC_MEM << 1;
             retval.extend = mem_size;
             break;
     }
