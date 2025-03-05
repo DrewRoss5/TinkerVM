@@ -6,8 +6,10 @@ add_executable(tvm
     inc/instruction.h
     inc/util.hpp
     inc/stack.hpp
+    inc/machine.h
     src/assembler.cpp
     src/instruction.cpp
     src/stack.cpp
+    src/machine.cpp
     src/main.cpp
 )
