@@ -1,0 +1,8 @@
+loadi r7 6
+loadi r8 3
+add r9 r7 r8
+sub r10 r7 r8
+mul r11 r7 r8
+div r12 r7 r8
+and r13 r7 r8
+muli r14 r7 10

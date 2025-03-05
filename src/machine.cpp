@@ -85,19 +85,18 @@ void Machine::exec_inst(const Instruction& inst){
     // parse the op code
     uint8_t op_code = inst.op_code;
     bool immediate = inst.op_code & 0x01;
+    // run the appropriate operation
+    uint8_t op_type = (op_code & 0xE0) >> 1;
     op_code &= 0xfe;
     op_code >>= 1;
-    // run the appropriate operation
-
-    uint8_t op_type = (op_code & 0xE0) >> 1;
     switch (op_type){
         case MEM_OP:
             exec_mem(op_code, immediate, inst.registers, inst.extend);
             break;
-        /*
         case LOGIC_OP:
             exec_logic(op_code, immediate, inst.registers, inst.extend);
             break;
+        /*
         case STACK_OP:
             exec_stack(op_code, immediate, inst.registers, inst.extend);
             break;
@@ -170,6 +169,52 @@ void Machine::exec_mem(uint8_t op_code, bool immediate, uint8_t registers, uint6
             this->registers[reg_2] = tmp;
             break;
         default:
+            break;
+    }
+}
+
+// executes an arithmatic/logical operation
+void Machine::exec_logic(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+    // parse the extent 
+    uint8_t src_reg, dst_reg;
+    uint64_t rhs;
+    split_registers(registers, dst_reg, src_reg);
+    // determine if the right hand side is stored in a register or is an immediate value
+    if (immediate)
+        rhs = extend;
+    else
+        rhs = this->registers[extend];
+    // perfrom the given operation and store it to the destination register
+    switch (op_code){
+        case ADD:
+            this->registers[dst_reg] = this->registers[src_reg] + rhs;
+            break;
+        case SUB:
+            this->registers[dst_reg] = this->registers[src_reg] - rhs;
+            break;
+        case MUL:
+            this->registers[dst_reg] = this->registers[src_reg] * rhs;
+            break;
+        case DIV:
+            this->registers[dst_reg] = this->registers[src_reg] / rhs;
+            break;
+        case REM:
+            this->registers[dst_reg] = this->registers[src_reg] % rhs;
+            break;
+        case AND:
+            this->registers[dst_reg] = this->registers[src_reg] & rhs;
+            break;
+        case OR:
+            this->registers[dst_reg] = this->registers[src_reg] | rhs;
+            break;
+        case XOR:
+            this->registers[dst_reg] = this->registers[src_reg] ^ rhs;
+            break;
+        case SR:
+            this->registers[dst_reg] = this->registers[src_reg] >> rhs;
+            break;
+        case SL:
+            this->registers[dst_reg] = this->registers[src_reg] << rhs;
             break;
     }
 }

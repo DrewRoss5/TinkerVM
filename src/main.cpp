@@ -19,11 +19,14 @@ void print_inst(const Instruction& inst){
 int main(){
     Assembler assembler;
     Machine vm;
-    assembler.assemble_file("../examples/memtest.tasm", "memtest.tcode");
-    vm.exec_file("memtest.tcode");
-    std::cout << "Memory test. This should print '10' twice, followed by '1234'" << std::endl;
-    std::cout << '\t' << vm.get_register(7) << std::endl;
-    std::cout << '\t' << vm.get_register(8) << std::endl;
-    std::cout << '\t' << vm.get_register(12) << std::endl;
+    assembler.assemble_file("../examples/binoptest.tasm", "logic.tcode");
+    vm.exec_file("logic.tcode");
+    std::cout << "Arithmatic/logic test" << std::endl;
+    std::cout << "\t6 + 3: " <<(int) vm.get_register(9) << std::endl;
+    std::cout << "\t6 - 3: " << vm.get_register(10) << std::endl;
+    std::cout << "\t6 * 3: " << vm.get_register(11) << std::endl;
+    std::cout << "\t6 / 3: " << vm.get_register(12) << std::endl;
+    std::cout << "\t6 and 3: " << vm.get_register(13) << std::endl;
+    std::cout << "\t6 * 10: " << vm.get_register(14) << std::endl;
     return 0;
 }
