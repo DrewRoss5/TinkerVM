@@ -336,7 +336,8 @@ Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::strin
     // we ignore the instruction bit when comparing operation codes
     uint8_t op_type = (op_code & 0xfe) >> 1;
     switch (op_type){
-        case STACK_PUSH:
+        case PUSH:
+        case PUSH_B:
             // determine if we are parsing pushing an immediate or register value
             if (op_type){
                 retval.registers = 0;
@@ -347,7 +348,8 @@ Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::strin
                 retval.extend = 0;
             }
             break;
-        case STACK_POP:
+        case POP:
+        case POP_B:
             retval.registers = parse_reg(operands[1]);
             retval.extend = 0;
             break;

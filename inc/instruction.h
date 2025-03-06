@@ -11,10 +11,6 @@ enum op_types {
     STACK_OP = 0x30,
     IO_OP = 0x40
 };
-enum stack_commands {
-    STACK_PUSH = 0x30,
-    STACK_POP = 0x31
-};
 enum data_types {
     WORD,
     STRINGZ,
@@ -47,7 +43,11 @@ enum op_codes{
     JGT,
     JLT,
     CAL,
-    RET
+    RET,
+    PUSH = 0x40,
+    PUSH_B,
+    POP,
+    POP_B
 };
 
 
