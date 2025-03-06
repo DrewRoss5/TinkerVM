@@ -51,20 +51,25 @@ std::string parse_str_lit(std::string& str_lit, bool null_terminate){
 // scans the instructions provided for program labels
 void Assembler::scan_prog_labels(std::vector<std::string>& lines){
     size_t line_count {lines.size()}, pos {0};
-    std::vector<size_t> to_remove;
+    std::unordered_map<size_t, bool> to_remove;
     std::string str;
     for (int i = 0; i < lines.size(); i++){
         str = lines[i];
         // check if the instruction is a program label
         if (str[str.size() - 1] == ':' && std::count(str.begin(), str.end(), ' ') == 0){
             this->program_labels[str.substr(0, str.size() - 1)] = pos - 1;
-            to_remove.push_back(i);
+            to_remove[i] = true;
         }
         else
             pos++;
     }
-    for (auto i : to_remove)
-        lines.erase(lines.begin() + i);
+    std::vector<std::string> new_lines;
+    size_t offset = 0;
+    for (int i = 0; i < line_count; i++){
+        if (!to_remove.count(i))
+            new_lines.push_back(lines[i]);
+    }
+    lines = new_lines;
 }
 
 // parses an operation and returns its 8-bit opcdoe

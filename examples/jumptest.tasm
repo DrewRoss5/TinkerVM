@@ -1,6 +1,8 @@
-loadi r9 50
-j loop
+loadi r9 200
+j mylabel
 loadi r7 100
+mylabel:
+addi r7 r7 50
 loop:
 addi r8 r8 1
 jne r8 r9 loop

@@ -9,7 +9,7 @@
 std::string read_str(std::ifstream& file){
     std::string retval;
     char curr_char;
-    while (!file.eof()){
+    while (true){
         file.get(curr_char);
         if (curr_char == '"')
             break;
@@ -59,11 +59,13 @@ void Machine::read_file(const std::string& file_path){
     Instruction inst;
     while (!file.eof()){
         file.read(reinterpret_cast<char*>(&inst_bytes[0]), 10);
+        if (file.eof())
+            break;
         inst = Instruction::from_bytes(inst_bytes);
         this->instructions.push_back(inst);
         this->instruction_count++;
     }
-    this->instructions.pop_back();
+    //this->instructions.pop_back();
 }
 
 // reads all instructions from a tcode file and runs the program

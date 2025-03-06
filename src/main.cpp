@@ -21,7 +21,7 @@ int main(){
     Machine vm;
     assembler.assemble_file("../examples/jumptest.tasm", "jump.tcode");
     vm.exec_file("jump.tcode");
-    std::cout << "Testing jump operations, r7 should be 0, and r9 should be 50";
+    std::cout << "Testing jump operations, r7 should be 50, and r9 should be 200";
     for (int i = 0; i < 16; i++)
         std::cout << "\n\tr" << i << ": " << vm.get_register(i);
     std::cout << std::endl;
