@@ -19,14 +19,11 @@ void print_inst(const Instruction& inst){
 int main(){
     Assembler assembler;
     Machine vm;
-    assembler.assemble_file("../examples/binoptest.tasm", "logic.tcode");
-    vm.exec_file("logic.tcode");
-    std::cout << "Arithmatic/logic test" << std::endl;
-    std::cout << "\t6 + 3: " <<(int) vm.get_register(9) << std::endl;
-    std::cout << "\t6 - 3: " << vm.get_register(10) << std::endl;
-    std::cout << "\t6 * 3: " << vm.get_register(11) << std::endl;
-    std::cout << "\t6 / 3: " << vm.get_register(12) << std::endl;
-    std::cout << "\t6 and 3: " << vm.get_register(13) << std::endl;
-    std::cout << "\t6 * 10: " << vm.get_register(14) << std::endl;
+    assembler.assemble_file("../examples/jumptest.tasm", "jump.tcode");
+    vm.exec_file("jump.tcode");
+    std::cout << "Testing jump operations, r7 should be 0, and r9 should be 50";
+    for (int i = 0; i < 16; i++)
+        std::cout << "\n\tr" << i << ": " << vm.get_register(i);
+    std::cout << std::endl;
     return 0;
 }

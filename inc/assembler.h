@@ -31,11 +31,14 @@ class Assembler{
         Instruction parse_stack(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_jump(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_io(uint8_t op_code, const std::vector<std::string>& operands);
+        void scan_prog_labels(std::vector<std::string>& lines);
         size_t next_label {0};
         size_t line_no {0};
+        size_t instruction_count{0};
         std::unordered_map<std::string, size_t> data_labels;
         std::unordered_map<std::string, size_t> program_labels;
         std::vector<std::string> program_strs;
+        std::vector<Instruction> instructions;
         /* this associates each pneumonic with a bytecode instruction, the first element of
            the tuple represents the op-code and the second part represents the immediate flag 
            1 for immediate operations, 0 for not*/

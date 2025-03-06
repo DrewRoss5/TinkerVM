@@ -96,6 +96,9 @@ void Machine::exec_inst(const Instruction& inst){
         case LOGIC_OP:
             exec_logic(op_code, immediate, inst.registers, inst.extend);
             break;
+        case JUMP_OP:
+            exec_jump(op_code, immediate, inst.registers, inst.extend);
+            break;
         /*
         case STACK_OP:
             exec_stack(op_code, immediate, inst.registers, inst.extend);
@@ -201,6 +204,8 @@ void Machine::exec_logic(uint8_t op_code, bool immediate, uint8_t registers, uin
         case REM:
             this->registers[dst_reg] = this->registers[src_reg] % rhs;
             break;
+        case COMP:
+            this->registers[dst_reg] = (this->registers[src_reg] == rhs);
         case AND:
             this->registers[dst_reg] = this->registers[src_reg] & rhs;
             break;
@@ -215,6 +220,48 @@ void Machine::exec_logic(uint8_t op_code, bool immediate, uint8_t registers, uin
             break;
         case SL:
             this->registers[dst_reg] = this->registers[src_reg] << rhs;
+            break;
+    }
+}
+
+// execute a jump operation
+void Machine::exec_jump(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+    uint8_t lhs,  rhs;
+    split_registers(registers, lhs, rhs);
+    // determine the operation to perform
+    switch (op_code)
+    {
+        case JUMP:
+            this->registers[PROGRAM_COUNTER] = extend;
+            break;
+        case JEQ:
+            // jump only if the registers are equal
+            if (this->registers[lhs] == this->registers[rhs])
+                this->registers[PROGRAM_COUNTER] = extend;
+            break;
+        case JNE:
+            // jump only if the registers are not equal
+            if (this->registers[lhs] != this->registers[rhs])
+                this->registers[PROGRAM_COUNTER] = extend;
+            break;
+        case JGT:
+            // jump only if the lhs is greater than rhs
+            if (this->registers[lhs] > this->registers[rhs])
+                this->registers[PROGRAM_COUNTER] = extend;
+            break;
+        case JLT:
+            // jump only if the lhs is greater than rhs
+            if (this->registers[lhs] > this->registers[rhs])
+                this->registers[PROGRAM_COUNTER] = extend;
+            break;
+        case CAL:
+            // store the current return address and jump to the function
+            this->registers[RET_ADDR] = this->registers[PROGRAM_COUNTER];
+            this->registers[PROGRAM_COUNTER] = extend;
+            break;
+        case RET:
+            // jumps to the current return address
+            this->registers[PROGRAM_COUNTER] = this->registers[RET_ADDR];
             break;
     }
 }

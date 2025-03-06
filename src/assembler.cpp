@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <algorithm>
 
 #include "../inc/assembler.h"
 
@@ -47,6 +48,24 @@ std::string parse_str_lit(std::string& str_lit, bool null_terminate){
     return out;
 }
 
+// scans the instructions provided for program labels
+void Assembler::scan_prog_labels(std::vector<std::string>& lines){
+    size_t line_count {lines.size()}, pos {0};
+    std::vector<size_t> to_remove;
+    std::string str;
+    for (int i = 0; i < lines.size(); i++){
+        str = lines[i];
+        // check if the instruction is a program label
+        if (str[str.size() - 1] == ':' && std::count(str.begin(), str.end(), ' ') == 0){
+            this->program_labels[str.substr(0, str.size() - 1)] = pos - 1;
+            to_remove.push_back(i);
+        }
+        else
+            pos++;
+    }
+    for (auto i : to_remove)
+        lines.erase(lines.begin() + i);
+}
 
 // parses an operation and returns its 8-bit opcdoe
 uint8_t Assembler::parse_op(const std::string& op){
@@ -98,11 +117,10 @@ Instruction Assembler::parse_label(const std::string& label){
     Instruction retval;
     std::string label_name = operands[0];
     label_name = label_name.substr(0, label_name.size() - 1);
-    // if there is no size specificiation, we assume that this is a program label
+    // if there is no size specificiation, we assume that this is a program label, which has already been identified
     if (operands.size() == 1){
-        this->program_labels[label_name] = this->line_no;
+        this->parse_jmp_label(label_name);
         retval.op_code = NULL_INST;
-        this->line_no++;
         return retval;
     }
     // generate an instruction to allocate space for the data label
@@ -178,13 +196,18 @@ void Assembler::assemble_file(const std::string& in_path, const std::string& out
     std::ifstream in(in_path);
     if (!in.good())
         throw std::runtime_error("Error: failed to read the input file");
-    std::vector<Instruction> instructions;
     std::string buf;
-    while (std::getline(in, buf)){
-        Instruction inst = assemble_inst(buf);
-        instructions.push_back(inst);
-    }
+    std::vector<std::string> lines;
+    while (std::getline(in, buf))
+        lines.push_back(buf);        
     in.close();
+    // scan for any program labels
+    this->scan_prog_labels(lines);  
+    // assemble the rest of the instructions
+    for (auto i : lines){
+        Instruction inst = assemble_inst(i);
+        this->instructions.push_back(inst);
+    }
     // store all program strings to the file
     std::ofstream out(out_path, std::ios::binary);
     size_t string_count = this->program_strs.size();
@@ -192,10 +215,12 @@ void Assembler::assemble_file(const std::string& in_path, const std::string& out
         out << '"' << program_strs[i] << '"';
     out << '\0';
     // store the bytecode to the output file
-    size_t instruction_count = instructions.size();
+    this->instruction_count = instructions.size();
     for (int i = 0; i < instruction_count; i++){
-        uint8_t* byte_buf = instructions[i].to_bytes().data();
-        out.write(reinterpret_cast<const char*>(byte_buf), INSTRUCTION_BYTES);
+        if (instructions[i].op_code != NULL_INST){
+            uint8_t* byte_buf = instructions[i].to_bytes().data();
+            out.write(reinterpret_cast<const char*>(byte_buf), INSTRUCTION_BYTES);
+        }
     }
     out.close();
 }
