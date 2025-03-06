@@ -63,6 +63,7 @@ void Machine::read_file(const std::string& file_path){
         this->instructions.push_back(inst);
         this->instruction_count++;
     }
+    this->instructions.pop_back();
 }
 
 // reads all instructions from a tcode file and runs the program
