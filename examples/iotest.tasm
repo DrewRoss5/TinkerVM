@@ -1,0 +1,8 @@
+hello: .stringz "Hello, World!\n\t"
+newline: .stringz "\n"
+loada r7 hello
+puts r7
+loadi r7 42
+puti r7
+loada r7 newline
+puts r7

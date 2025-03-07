@@ -1,24 +1,44 @@
+#include <stdio.h>
 #include <stdexcept>
 #include <fstream>
 #include <cstring>
+#include <unordered_map>
 
 #include "../inc/instruction.h"
 #include "../inc/machine.h"
 
 // reads a string literal wrapped in quotations from a file
 std::string read_str(std::ifstream& file){
+    std::unordered_map<char, char> escapes{
+        {'n', '\n'},
+        {'t', '\t'},
+        {'b', '\b'},
+        {'v', '\v'},
+        {'f', '\f'},
+        {'r', '\r'}
+    };
     std::string retval;
     char curr_char;
     while (true){
         file.get(curr_char);
         if (curr_char == '"')
             break;
+        else if (curr_char == '\\'){
+            file.get(curr_char);
+            if (file.eof())
+                throw std::runtime_error("malformed binary (invalid string)");
+            if (curr_char != '\\')
+                curr_char = escapes[curr_char];
+        }
+
         retval.push_back(curr_char);
     }
     if (curr_char != '"')
         throw std::runtime_error("malformed binary (invalid string)");
     return retval;   
 }
+
+
 
 // splits a merged register into two seperate values
 void split_registers(uint8_t registers, uint8_t& r1, uint8_t& r2){
@@ -105,11 +125,9 @@ void Machine::exec_inst(const Instruction& inst){
         case STACK_OP:
             exec_stack(op_code, immediate, inst.registers, inst.extend);
             break;
-        /*
         case IO_OP:
-            exec_stack(op_code, immediate, inst.registers, inst.extend);
+            exec_io(op_code, immediate, inst.registers, inst.extend);
             break;
-        */
         default:
             throw std::runtime_error("malformed binary (invalid operation)");
             break;
@@ -270,9 +288,8 @@ void Machine::exec_jump(uint8_t op_code, bool immediate, uint8_t registers, uint
 }
 
 void Machine::exec_stack(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
-    uint8_t _, reg;
+    uint8_t reg = registers & 0x0f;
     uint64_t rhs;
-    split_registers(registers, _, reg);
     if (immediate)
         rhs = extend;
     else
@@ -298,5 +315,22 @@ void Machine::exec_stack(uint8_t op_code, bool immediate, uint8_t registers, uin
             break;
         default:
             break;
+    }
+}
+
+// executes an IO operation
+void Machine::exec_io(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+    uint8_t reg = registers & 0x0f;
+    uint8_t index;
+    const char* str;
+    switch (op_code){
+        case PUT_S:
+            str = reinterpret_cast<char*>(this->registers[reg]);
+            printf("%s", str);
+            break;
+        case PUT_I:
+            printf("%lu", this->registers[reg]);
+            break;
+
     }
 }

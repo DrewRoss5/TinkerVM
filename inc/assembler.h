@@ -81,6 +81,7 @@ class Assembler{
             {"push",    {0x30, 0}},
             {"pushi",   {0x30, 1}},
             {"pushb",   {0x31, 0}},
+            {"pushbi",  {0x31, 1}},
             {"pop",     {0x32, 0}},
             {"popb",    {0x33, 0}},
             {"puts",    {0x40, 0}},

@@ -47,7 +47,11 @@ enum op_codes{
     PUSH = 0x30,
     PUSH_B,
     POP,
-    POP_B
+    POP_B,
+    PUT_S = 0x40,
+    PUT_I,
+    GET_S,
+    GET_I
 };
 
 
