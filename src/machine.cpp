@@ -336,7 +336,7 @@ void Machine::exec_io(uint8_t op_code, bool immediate, uint8_t registers, uint64
             printf("%lu", this->registers[reg]);
             break;
         case GET_S:
-            std::cin >> input;
+            std::getline(std::cin, input);
             this->prog_strings.push_back(input);
             str = (prog_strings.end() - 1)->c_str();
             this->registers[reg] = reinterpret_cast<uint64_t>(str);
