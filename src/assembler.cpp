@@ -150,9 +150,8 @@ Instruction Assembler::parse_label(const std::string& label){
             if (operands.size() < 3)
                 throw std::runtime_error("invalid label declaration");
             // append all operands after the thrid to the third
-            for (int i = 3; i < operands.size(); i++){
-                operands[2] += operands[i];
-            }
+            for (int i = 3; i < operands.size(); i++)
+                operands[2] += " " + operands[i];
             null_terminate = (label_type == STRINGZ);
             str_lit = parse_str_lit(operands[2], null_terminate);
             
@@ -215,9 +214,10 @@ void Assembler::assemble_file(const std::string& in_path, const std::string& out
     }
     // store all program strings to the file
     std::ofstream out(out_path, std::ios::binary);
+    out << std::noskipws;
     size_t string_count = this->program_strs.size();
     for (int i = 0; i < string_count; i++)
-        out << '"' << program_strs[i] << '"';
+        out << std::noskipws << '"' << program_strs[i] << '"';
     out << '\0';
     // store the bytecode to the output file
     this->instruction_count = instructions.size();

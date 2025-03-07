@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <iostream>
 #include <stdexcept>
 #include <fstream>
 #include <cstring>
 #include <unordered_map>
+#include <iostream>
 
 #include "../inc/instruction.h"
 #include "../inc/machine.h"
@@ -18,19 +20,19 @@ std::string read_str(std::ifstream& file){
         {'r', '\r'}
     };
     std::string retval;
+    std::string str;
     char curr_char;
     while (true){
-        file.get(curr_char);
+        file >> std::noskipws >> curr_char;
         if (curr_char == '"')
             break;
         else if (curr_char == '\\'){
-            file.get(curr_char);
+            file >> std::noskipws >> curr_char;
             if (file.eof())
                 throw std::runtime_error("malformed binary (invalid string)");
             if (curr_char != '\\')
                 curr_char = escapes[curr_char];
         }
-
         retval.push_back(curr_char);
     }
     if (curr_char != '"')
@@ -64,7 +66,8 @@ uint64_t Machine::get_register(size_t reg_no){
 
 // reads all the instructions from a bytecode file
 void Machine::read_file(const std::string& file_path){
-    std::ifstream file(file_path, std::ios::binary);
+    std::ifstream file(file_path);
+    file >> std::noskipws;
     if (!file.good())
         throw std::runtime_error("failed to read the binary");
     char curr_char;
@@ -85,7 +88,6 @@ void Machine::read_file(const std::string& file_path){
         this->instructions.push_back(inst);
         this->instruction_count++;
     }
-    //this->instructions.pop_back();
 }
 
 // reads all instructions from a tcode file and runs the program
@@ -322,15 +324,26 @@ void Machine::exec_stack(uint8_t op_code, bool immediate, uint8_t registers, uin
 void Machine::exec_io(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
     uint8_t reg = registers & 0x0f;
     uint8_t index;
+    uint64_t input_int;
     const char* str;
+    std::string input;
     switch (op_code){
         case PUT_S:
-            str = reinterpret_cast<char*>(this->registers[reg]);
+            str = reinterpret_cast<const char*>(this->registers[reg]);
             printf("%s", str);
             break;
         case PUT_I:
             printf("%lu", this->registers[reg]);
             break;
-
+        case GET_S:
+            std::cin >> input;
+            this->prog_strings.push_back(input);
+            str = (prog_strings.end() - 1)->c_str();
+            this->registers[reg] = reinterpret_cast<uint64_t>(str);
+            break;
+        case GET_I:
+            std::cin >> input_int;
+            this->registers[reg] = input_int;
+            break;
     }
 }

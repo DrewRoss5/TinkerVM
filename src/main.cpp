@@ -21,7 +21,7 @@ void print_registers(Machine& vm){
 int main(){
     Assembler assembler;
     Machine vm;
-    std::cout << "IO Test, this should print \"Hello, World\" followed by 42:" <<  "\n\t";
+    std::cout << "IO Test:"<< std::endl;
     assembler.assemble_file("../examples/iotest.tasm", "hello.tcode");
     vm.exec_file("hello.tcode");
     return 0;
