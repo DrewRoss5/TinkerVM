@@ -12,18 +12,17 @@ std::string to_hex(T in){
     return ss.str();
 }
 
-void print_inst(const Instruction& inst){
-    std::cout << to_hex(inst.op_code) << to_hex(inst.registers) << to_hex(inst.extend) << std::endl; 
+void print_registers(Machine& vm){
+    for (int i = 0; i < 16; i++)
+        std::cout << "R" << i << ": " << vm.get_register(i) << "\n";
+    std::cout << std::endl;
 }
 
 int main(){
     Assembler assembler;
     Machine vm;
-    assembler.assemble_file("../examples/jumptest.tasm", "jump.tcode");
-    vm.exec_file("jump.tcode");
-    std::cout << "Testing jump operations, r7 should be 50, and r9 should be 200";
-    for (int i = 0; i < 16; i++)
-        std::cout << "\n\tr" << i << ": " << vm.get_register(i);
-    std::cout << std::endl;
+    assembler.assemble_file("../examples/stacktest.tasm", "stack.tcode");
+    vm.exec_file("stack.tcode");
+    print_registers(vm);
     return 0;
 }

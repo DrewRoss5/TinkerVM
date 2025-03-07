@@ -8,7 +8,7 @@ Stack::Stack(){
 }
 
 Stack::~Stack(){
-    delete this->stack_ptr;
+    delete this->init_ptr;
     this->stack_ptr = nullptr;
     this->init_ptr = nullptr;
 }

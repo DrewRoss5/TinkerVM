@@ -44,7 +44,7 @@ enum op_codes{
     JLT,
     CAL,
     RET,
-    PUSH = 0x40,
+    PUSH = 0x30,
     PUSH_B,
     POP,
     POP_B

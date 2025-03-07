@@ -1,0 +1,7 @@
+call test_func
+muli r7 r7 2
+j exit
+test_func:
+loadi r7 10
+ret
+exit:

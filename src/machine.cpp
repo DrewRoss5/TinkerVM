@@ -102,10 +102,10 @@ void Machine::exec_inst(const Instruction& inst){
         case JUMP_OP:
             exec_jump(op_code, immediate, inst.registers, inst.extend);
             break;
-        /*
         case STACK_OP:
             exec_stack(op_code, immediate, inst.registers, inst.extend);
             break;
+        /*
         case IO_OP:
             exec_stack(op_code, immediate, inst.registers, inst.extend);
             break;
@@ -265,6 +265,38 @@ void Machine::exec_jump(uint8_t op_code, bool immediate, uint8_t registers, uint
         case RET:
             // jumps to the current return address
             this->registers[PROGRAM_COUNTER] = this->registers[RET_ADDR];
+            break;
+    }
+}
+
+void Machine::exec_stack(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+    uint8_t _, reg;
+    uint64_t rhs;
+    split_registers(registers, _, reg);
+    if (immediate)
+        rhs = extend;
+    else
+        rhs = this->registers[reg];
+    switch (op_code){
+        case PUSH:
+            // push the value of the register onto the stack
+            this->stack.push(rhs); 
+            break;
+        case PUSH_B:
+            // push the rightmost byte of the register onto the stack
+            this->stack.push(static_cast<uint8_t>(rhs & 0xff));
+            break;
+        case POP:
+            if (this->stack.is_empty())
+                throw std::runtime_error("no values on the stack to pop!");
+            this->registers[reg] = stack.pop_type<uint64_t>();
+            break;
+        case POP_B:
+            if (this->stack.is_empty())
+                throw std::runtime_error("no values on the stack to pop!");
+            this->registers[reg] = *stack.pop();
+            break;
+        default:
             break;
     }
 }

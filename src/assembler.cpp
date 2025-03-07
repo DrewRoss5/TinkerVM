@@ -339,7 +339,7 @@ Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::strin
         case PUSH:
         case PUSH_B:
             // determine if we are parsing pushing an immediate or register value
-            if (op_type){
+            if (op_code & 0x01){
                 retval.registers = 0;
                 retval.extend = parse_immediate(operands[1]);
             }
