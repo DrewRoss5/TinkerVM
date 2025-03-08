@@ -88,13 +88,15 @@ void Machine::read_file(const std::string& file_path){
         this->instructions.push_back(inst);
         this->instruction_count++;
     }
+    // set the return value to exit the program if called outside of a function
+    this->registers[RET_ADDR] = this->instruction_count + 1;
 }
 
 // reads all instructions from a tcode file and runs the program
 void Machine::exec_file(const std::string& file_path){
     this->read_file(file_path);
     // keep executing the program until we run out of instructions
-    while (this->registers[PROGRAM_COUNTER] != this->instruction_count)
+    while (this->registers[PROGRAM_COUNTER] < this->instruction_count)
         this->exec_next();
 }
 
@@ -285,6 +287,7 @@ void Machine::exec_jump(uint8_t op_code, bool immediate, uint8_t registers, uint
         case RET:
             // jumps to the current return address
             this->registers[PROGRAM_COUNTER] = this->registers[RET_ADDR];
+            this->registers[RET_ADDR] = this->instruction_count + 1;
             break;
     }
 }

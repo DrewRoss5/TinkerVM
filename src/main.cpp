@@ -21,8 +21,8 @@ void print_registers(Machine& vm){
 int main(){
     Assembler assembler;
     Machine vm;
-    std::cout << "IO Test:"<< std::endl;
-    assembler.assemble_file("../examples/iotest.tasm", "hello.tcode");
-    vm.exec_file("hello.tcode");
+    assembler.assemble_file("../examples/functest.tasm", "func.tcode");
+    vm.exec_file("func.tcode");
+    print_registers(vm);
     return 0;
 }
