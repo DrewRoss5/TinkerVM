@@ -30,7 +30,7 @@ std::string read_str(std::ifstream& file){
             file >> std::noskipws >> curr_char;
             if (file.eof())
                 throw std::runtime_error("malformed binary (invalid string)");
-            if (curr_char != '\\')
+            if (escapes.count(curr_char))
                 curr_char = escapes[curr_char];
         }
         retval.push_back(curr_char);
