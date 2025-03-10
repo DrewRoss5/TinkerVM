@@ -34,3 +34,5 @@ This will generate a `tvm` executable which can be used to assemble tinkerassemb
   - Assembles the input_file and stores the bytecode to the output file. If no output file is provided the bytecode will be stored in out.tcode
 - `run <input_file>`:
   - Executes the provided tcode file.
+- `run-debug <input_file>`:
+  - Executes the provided tcode file, and displays the values of all registers once the program exits.
