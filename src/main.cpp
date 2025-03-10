@@ -9,14 +9,15 @@ enum Command{
     NULL_CMD,
     HELP,
     BUILD,
-    RUN
+    RUN,
+    DEBUG,
 };
 
 void print_error(const std::string& err_msg);
 Command parse_command(const std::string& command);
 void print_help();
 int assemble_prog(const std::string& in, const std::string& out);
-int exec_prog(const std::string& in);
+int exec_prog(const std::string& in, bool debug);
 
 int main(int argc, char** argv){
     if (argc == 1){
@@ -25,6 +26,7 @@ int main(int argc, char** argv){
     }
     Command cmd = parse_command(argv[1]);
     std::string in, out;
+    bool debug;
     switch (cmd){
         case NULL_CMD:
             print_error("Unrecognized command: " + cmd);
@@ -47,10 +49,12 @@ int main(int argc, char** argv){
             }
             return assemble_prog(in, out);
         case RUN:
+        case DEBUG:
             if (argc != 3)
                 print_error("this command only accepts one argument. Use 'tvm help' for more information");
             in = argv[2];
-            return exec_prog(in);
+            debug = (cmd == DEBUG);
+            return exec_prog(in, debug);
     }
     return 0;
 }
@@ -63,7 +67,8 @@ Command parse_command(const std::string& command){
     std::unordered_map<std::string, Command> options{
         {"help", HELP},
         {"build", BUILD},
-        {"run", RUN}
+        {"run", RUN},
+        {"run-debug", DEBUG}
     };
     auto cmd_itt = options.find(command);
     if (cmd_itt == options.end())
@@ -72,16 +77,17 @@ Command parse_command(const std::string& command){
 }
 
 void print_help(){
-    std::string names[] = {"help", "build", "run"};
-    std::string args[] = {"", "<input_file> [output_file]", "<input_file>"};
+    std::string names[] = {"help", "build", "run",  "run-debug"};
+    std::string args[] = {"", "<input_file> [output_file]", "<input_file>", "<input_file>"};
     std::string descriptions[] = {
         "displays this menu",
         "assembles the input_file and stores the bytecode to the output file. If no output file is provided the bytecode will be stored in out.tcode",
-        "executes the provided tcode file"
+        "executes the provided tcode file",
+        "executes the provided tcode file and displays the values of all registers at completion" 
     };
     std::cout << "Program options" << std::endl;
-    for (int i = 0; i < 3; i++)
-        std::cout << "\t" << std::left << std::setw(10) << names[i] << std::setw(35) << args[i] << descriptions[i] << "\n";
+    for (int i = 0; i < 4; i++)
+        std::cout << "\t" << std::left << std::setw(15) << names[i] << std::setw(35) << args[i] << descriptions[i] << "\n";
     std::cout << "Visit https://github.com/DrewRoss5/TinkerVM for more information" << std::endl;
 }
 
@@ -98,7 +104,7 @@ int assemble_prog(const std::string& in, const std::string& out){
     return 0;
 }
 
-int exec_prog(const std::string& in){
+int exec_prog(const std::string& in, bool debug){
     Machine vm;
     try{
         vm.exec_file(in);
@@ -106,6 +112,13 @@ int exec_prog(const std::string& in){
     catch (std::runtime_error err){
         print_error(err.what());
         return -1;
+    }
+    // print the value of each register if we're in debug mode
+    if (debug){
+        std::cout << "Registers:";
+        for (int i = 0; i < 16; i++)
+            std::cout << "\n\tR" << i << ": " << vm.get_register(i);
+        std::cout << std::endl;
     }
     return 0;
 }
