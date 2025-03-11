@@ -276,7 +276,7 @@ void Machine::exec_jump(uint8_t op_code, bool immediate, uint8_t registers, uint
             break;
         case JLT:
             // jump only if the lhs is greater than rhs
-            if (this->registers[lhs] > this->registers[rhs])
+            if (this->registers[lhs] < this->registers[rhs])
                 this->registers[PROGRAM_COUNTER] = extend;
             break;
         case CAL:
