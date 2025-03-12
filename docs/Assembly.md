@@ -30,6 +30,7 @@ The purposes of these registers is as follows:
 <td>General Purpose</td>
 </tr>
 </table>
+
 # Operations
 Currently, there are five basic types operations in TinkerVM
 <ul>
@@ -39,6 +40,7 @@ Currently, there are five basic types operations in TinkerVM
 	<li>Stack operations</li>
 	<li>I/O operations</li>
 </ul>
+
 #### Note:
 Operations that support immediate values may replace their rightmost register with an immediate (literal) value, immediate operations are followed by an `i`, for instance:,
 `add` adds two registers where `addi` adds the value of a register and an immediate value.
