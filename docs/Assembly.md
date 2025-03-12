@@ -79,3 +79,41 @@ Stores `r7` + `r8` to `r9`. RHS can be either a register or an immediate value.
 - `sl` (bitwise shift left. Does not support immediate values)
 - `sr` (bitwise shift right. Does not support immediate values)
 - `comp` (comparison, evaluates to `r1 == rhs`)
+
+### Jump Operations:
+#### `j <label>`
+- Jumps to `label`
+#### `jeq <r1> <r2> <label>`
+- Jumps to `label` if `r1` is equal to `r2`
+#### `jne <r1> <r2> <label>`
+- Jumps to `label` if `r1` is not equal to `r2`
+#### `jgt <r1> <r2> <label>`
+- Jumps to `label` if `r1` is greater than `r2`
+#### `jlt <r1> <r2> <label>`
+- Jumps to `label` if `r1` is less than `r2`
+#### `call <label>`
+- Jumps to `label` and sets the return address register to the current place in the program
+- This is used to implement functions
+#### `ret`
+- Jumps to the position stored in the reeturn address register
+
+### Stack Operations:
+#### `push <r0>/pushb <r0>`:
+- Pushes the value of r0 to the program stack
+- `push` pushes a 64-bit word and `pushb` pushes a byte
+- Supports immediate values
+
+#### `pop <r0>/popb <r0>`:
+- Pops the top value off of the program stack and stores it to `r0`
+- `pop` pops a 64 bit word
+- `popb` pops a single byte
+
+### I/O Operations:
+#### `puts <r0>`
+- Prints the string at the address stored in `r0`
+#### `puti <r0>`
+- Prints the 64-bit integer value of `r0`
+#### `gets <r0>`
+- Reads a string from stdin and stores the address of the read string to r0
+#### `geti <r0>`
+- Reads a 64-bit integer from stdin and stores it to `r0`
