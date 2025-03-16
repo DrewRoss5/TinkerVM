@@ -31,6 +31,7 @@ class Assembler{
         Instruction parse_stack(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_jump(uint8_t op_code, const std::vector<std::string>& operands);
         Instruction parse_io(uint8_t op_code, const std::vector<std::string>& operands);
+        Instruction parse_heap(uint8_t op_code, const std::vector<std::string>& operands);
         void scan_prog_labels(std::vector<std::string>& lines);
         size_t next_label {0};
         size_t line_no {0};
@@ -63,6 +64,7 @@ class Assembler{
             {"rem",     {0x14, 0}},
             {"remi",    {0x14, 1}},
             {"comp",    {0x15, 0}},
+            {"compi",   {0x15, 1}},
             {"and",     {0x16, 0}},
             {"andi",    {0x16, 1}},
             {"or",      {0x17, 0}},
@@ -87,7 +89,9 @@ class Assembler{
             {"puts",    {0x40, 0}},
             {"puti",    {0x41, 0}},
             {"gets",    {0x42, 0}},
-            {"geti",    {0x43, 0}}
+            {"geti",    {0x43, 0}},
+            {"halloc",  {0x50, 0}},
+            {"hfree",   {0x51, 0}}
         };
         std::unordered_map<std::string, int> type_map{
             {".word", WORD},

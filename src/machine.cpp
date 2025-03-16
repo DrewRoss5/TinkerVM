@@ -132,6 +132,9 @@ void Machine::exec_inst(const Instruction& inst){
         case IO_OP:
             exec_io(op_code, immediate, inst.registers, inst.extend);
             break;
+        case HEAP_OP:
+            exec_heap(op_code, immediate, inst.registers, inst.extend);
+            break;
         default:
             throw std::runtime_error("malformed binary (invalid operation)");
             break;
@@ -347,6 +350,24 @@ void Machine::exec_io(uint8_t op_code, bool immediate, uint8_t registers, uint64
         case GET_I:
             std::cin >> input_int;
             this->registers[reg] = input_int;
+            break;
+    }
+}
+
+void Machine::exec_heap(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+    uint8_t* ptr;
+    uint8_t reg, _;
+    split_registers(registers, reg, _);
+    switch (op_code){
+        case HEAP_ALLOC:
+            // allocate memory of the specified size and store the pointer in the desitnation register
+            ptr = new uint8_t[extend];
+            this->registers[reg] = reinterpret_cast<uint64_t>(ptr);
+            break;
+        case HEAP_FREE:
+            // free the memory in the given register
+            ptr = reinterpret_cast<uint8_t*>(this->registers[reg]);
+            delete ptr;
             break;
     }
 }

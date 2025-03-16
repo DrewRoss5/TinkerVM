@@ -257,6 +257,9 @@ Instruction Assembler::assemble_inst(const std::string& inst){
             case IO_OP:
                 retval = parse_io(op_code, operands);
                 break;
+            case HEAP_OP:
+                retval = parse_heap(op_code, operands);
+                break;
         }
         this->line_no++;
         return retval;
@@ -305,7 +308,7 @@ Instruction Assembler::parse_mem(uint8_t op_code, const std::vector<std::string>
 Instruction Assembler::parse_logic(uint8_t op_code, const std::vector<std::string>& operands){
     // ensure four opperands are included (opcode, dst, lhs, rhs)
     if (operands.size() != 4)
-        throw std::runtime_error("invalid instruction. Operation expects four operands");
+        throw std::runtime_error("invalid instruction. Operation expects three operands");
     // the first two operands must be registers
     uint8_t reg1 = parse_reg(operands[1]);
     uint8_t reg2 = parse_reg(operands[2]);
@@ -398,5 +401,26 @@ Instruction Assembler::parse_io(uint8_t op_code, const std::vector<std::string>&
         throw std::runtime_error("invalid io operation");
     uint8_t dst_reg = parse_reg(operands[1]);
     retval.registers = dst_reg;
+    return retval;
+}
+
+// parses a heap instruction
+Instruction Assembler::parse_heap(uint8_t op_code, const std::vector<std::string>& operands){
+    Instruction retval;
+    retval.op_code = op_code;
+    switch ((op_code & 0xfe) >> 1){
+        case HEAP_ALLOC:
+            if (operands.size() != 3)
+                throw std::runtime_error("halloc expects two operands");
+            retval.registers = parse_reg(operands[1]);
+            // read the size of memory to allocate
+            retval.extend = parse_immediate(operands[2]);
+            break;
+        case HEAP_FREE:
+            if (operands.size() != 2)
+                throw std::runtime_error("hfree expects one operand");
+            retval.registers = parse_reg(operands[1]);
+            break;
+    }
     return retval;
 }

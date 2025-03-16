@@ -9,7 +9,8 @@ enum op_types {
     LOGIC_OP = 0x10,
     JUMP_OP = 0x20,
     STACK_OP = 0x30,
-    IO_OP = 0x40
+    IO_OP = 0x40,
+    HEAP_OP = 0x50,
 };
 enum data_types {
     WORD,
@@ -51,7 +52,9 @@ enum op_codes{
     PUT_S = 0x40,
     PUT_I,
     GET_S,
-    GET_I
+    GET_I,
+    HEAP_ALLOC = 0x50,
+    HEAP_FREE
 };
 
 

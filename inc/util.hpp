@@ -26,7 +26,6 @@ void split_bytes(T data, uint8_t* out){
         out[i] = (data & mask_val) >> shift_val;
         mask_val >>= 8;
     }
-
 }
 
 #endif
