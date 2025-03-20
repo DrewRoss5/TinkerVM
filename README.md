@@ -14,7 +14,6 @@ While TinkerVM is currently in the early stages of development, it is open for e
 ### Planned Features (Project Roadmap):
 - Comprehensive documentation for the TinkerVM assembly language
 - A framework for implementing custom commands and extensions
-- Heap-allocation
 - Floating point support
 - File I/O support
 - System Calls
