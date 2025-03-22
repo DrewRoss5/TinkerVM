@@ -43,7 +43,7 @@ std::string read_str(std::ifstream& file){
 
 
 // splits a merged register into two seperate values
-void split_registers(uint8_t registers, uint8_t& r1, uint8_t& r2){
+void Machine::split_registers(uint8_t registers, uint8_t& r1, uint8_t& r2){
     r2 = registers & 0x0f;
     r1 = registers & 0xf0;
     r1 >>= 4;
@@ -59,9 +59,28 @@ Machine::~Machine(){
         delete this->labels[i];
 }
 
+// sets the value of the given register
+void Machine::set_register(size_t reg_no, uint64_t val){
+    this->registers[reg_no] = val;
+}
+
 // returns the value of the given register
 uint64_t Machine::get_register(size_t reg_no){
     return this->registers[reg_no];
+}
+
+// adds an extension and associates it with an operation family
+void Machine::add_extension(uint8_t op_family, void(*op)(Machine*, uint8_t, bool, uint8_t, uint64_t)){
+    // check if the operation family is inside the reserved range
+    if (op_family <= 0x50)
+        throw std::runtime_error("invalid operation family (reserved)");
+    // check if the operation family is already implemented by another extension
+    if (this->extensions.count(op_family))
+        throw std::runtime_error("invalid operation family (in use by another extension)");
+    // ensure the operation family can be stored in 3 bits
+    if (op_family > 0x80)
+        throw std::runtime_error("invalid operation family (out of range)");
+    this->extensions[op_family] = op;
 }
 
 // reads all the instructions from a bytecode file
@@ -136,7 +155,10 @@ void Machine::exec_inst(const Instruction& inst){
             exec_heap(op_code, immediate, inst.registers, inst.extend);
             break;
         default:
-            throw std::runtime_error("malformed binary (invalid operation)");
+            auto itt = this->extensions.find(op_type);
+            if (itt == this->extensions.end())
+                throw std::runtime_error("malformed binary (invalid operation)");
+            itt->second(this, op_code, immediate, inst.registers, inst.extend);
             break;
     }
 }

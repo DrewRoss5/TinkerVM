@@ -1,0 +1,12 @@
+header1: .stringz "5^2: "
+header2: .stringz "\n5^3: "
+loadi r7 5
+loadi r8 3
+square r10 r7
+loada r9 header1
+puts r9
+puti r10
+pow r10 r7 r8
+loada r9 header2
+puts r9
+puti r10

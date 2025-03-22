@@ -8,6 +8,7 @@
 #include "../inc/assembler.h"
 
 #define INSTRUCTION_BYTES 10
+#define EXTEND 0xfe
 
 // splits a string by spaces and returns each "word"
 std::vector<std::string> split_str(const std::string& str){
@@ -76,10 +77,11 @@ void Assembler::scan_prog_labels(std::vector<std::string>& lines){
 uint8_t Assembler::parse_op(const std::string& op){
     auto op_itt = op_map.find(op);
     if (op_itt == op_map.end()){
-        // determine this if this a label or invalid statement
+        // determine this if this a label
         if (op[op.size() - 1] == ':')
             return NULL_INST;
-        throw std::runtime_error("invalid operation");
+        // indicate that the result is an extension, and not an in-built command
+        return EXTEND;
     }
     // parse the opcode and add the immediate bit
     auto operation = op_itt->second;
@@ -194,6 +196,14 @@ uint8_t Assembler::merge_registers(uint8_t r1, uint8_t r2){
     return retval ^ r2;
 }
 
+// adds a new extension instruction to the assembler
+void Assembler::add_extension(const std::string& instruction, Instruction(*parser)(const std::vector<std::string>& operands)){
+    auto itt = this->extensions.find(instruction);
+    if (itt != this->extensions.end())
+        throw std::runtime_error("An extension using that pneumonic has already been implemented");
+    this->extensions[instruction] = parser;
+}
+
 // converts an tinker assembly file to a byte code file to be exewcuted
 void Assembler::assemble_file(const std::string& in_path, const std::string& out_path){
     // read the input file
@@ -230,14 +240,23 @@ void Assembler::assemble_file(const std::string& in_path, const std::string& out
     out.close();
 }
 
+// assembles a command from an extension
+Instruction Assembler::parse_extend(const std::vector<std::string>& operands){
+    auto itt = this->extensions.find(operands[0]);
+    if (itt == extensions.end())
+        throw std::runtime_error("unrecognized command");
+    return itt->second(operands);
+}
+
 // converts a pneumonic text insturction to a byte code instruction
 Instruction Assembler::assemble_inst(const std::string& inst){
     try{
         std::vector<std::string> operands = split_str(inst);
         uint8_t op_code = this->parse_op(operands[0]);
-        // if this is an unrecognized operation, treat it as a label
         if (op_code == NULL_INST)
             return this->parse_label(inst);
+        if (op_code == EXTEND)
+            return this->parse_extend(operands);
         // determine how to parse the instruction, based on it's type
         uint8_t op_type = (op_code & 0xE0) >> 1; // left most three bits  
         Instruction retval;

@@ -17,11 +17,13 @@ class Assembler{
     public:
         Assembler() {}
         void assemble_file(const std::string& in_path, const std::string& outpath);
+        void add_extension(const std::string& operation, Instruction(*parser)(const std::vector<std::string>&));
         Instruction assemble_inst(const std::string& inst);
+        static uint8_t parse_reg(const std::string& reg);
+        static uint8_t merge_registers(uint8_t r1, uint8_t r2);
     private:
         uint8_t parse_op(const std::string& op);
-        uint8_t parse_reg(const std::string& reg);
-        uint8_t merge_registers(uint8_t r1, uint8_t r2);
+        Instruction parse_extend(const std::vector<std::string>& operands);
         uint64_t parse_immediate(const std::string& imm);
         uint64_t parse_jmp_label(const std::string& label);
         uint64_t parse_data_label(const std::string& label);
@@ -38,6 +40,7 @@ class Assembler{
         size_t instruction_count{0};
         std::unordered_map<std::string, size_t> data_labels;
         std::unordered_map<std::string, size_t> program_labels;
+        std::unordered_map<std::string, Instruction(*)(const std::vector<std::string>&)> extensions;
         std::vector<std::string> program_strs;
         std::vector<Instruction> instructions;
         /* this associates each pneumonic with a bytecode instruction, the first element of

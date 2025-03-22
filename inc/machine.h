@@ -1,3 +1,6 @@
+#ifndef MACHINE_H
+#define MACHINE_H
+
 #include <array>
 #include <string>
 #include <vector>
@@ -21,11 +24,13 @@ class Machine{
     public:
         Machine();
         ~Machine();
+        static void split_registers(uint8_t registers, uint8_t& r1, uint8_t& r2);
         uint64_t get_register(size_t reg_no);
         void exec_next();
         void exec_file(const std::string& file_path);
         void exec_inst(const Instruction& inst);
-         
+        void set_register(size_t reg_no, uint64_t val);
+        void add_extension(uint8_t op_family, void(*op)(Machine*, uint8_t, bool, uint8_t, uint64_t));
     private:
         void read_file(const std::string& file_path);     
         void exec_mem(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
@@ -38,6 +43,9 @@ class Machine{
         std::vector<uint8_t*> labels;
         std::vector<Instruction> instructions;
         std::vector<std::string> prog_strings;
+        std::unordered_map<uint8_t, void(*)(Machine*, uint8_t, bool, uint8_t, uint64_t)> extensions;
         Stack stack;
         size_t instruction_count {0};
 };
+
+#endif

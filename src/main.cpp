@@ -4,6 +4,7 @@
 
 #include "../inc/assembler.h"
 #include "../inc/machine.h"
+#include "../extensions/pow.h"
 
 enum Command{
     NULL_CMD,
@@ -94,6 +95,7 @@ void print_help(){
 int assemble_prog(const std::string& in, const std::string& out){
     try{
         Assembler assembler; 
+        init_pow_assembler(assembler);
         assembler.assemble_file(in, out);
         std::cout << "Built " << out << " succesfully." << std::endl;
     }
@@ -106,6 +108,7 @@ int assemble_prog(const std::string& in, const std::string& out){
 
 int exec_prog(const std::string& in, bool debug){
     Machine vm;
+    init_pow_machine(vm);
     try{
         vm.exec_file(in);
     }

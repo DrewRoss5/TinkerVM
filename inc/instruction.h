@@ -59,6 +59,7 @@ enum op_codes{
 
 
 struct Instruction{
+    Instruction();
     uint8_t op_code;
     uint8_t registers;
     uint64_t extend;

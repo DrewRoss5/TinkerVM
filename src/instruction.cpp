@@ -1,6 +1,12 @@
 #include "../inc/instruction.h"
 #include "../inc/util.hpp"
 
+Instruction::Instruction(){
+    this->op_code = 0;
+    this->registers = 0;
+    this->extend = 0;
+}
+
 std::array<uint8_t, 10> Instruction::to_bytes(){
     std::array<uint8_t, 10> retval;
     // store the op code and register values
