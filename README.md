@@ -12,11 +12,14 @@ While TinkerVM is currently in the early stages of development, it is open for e
     - Jump instructions and functions
     - Simple I/O
 ### Planned Features (Project Roadmap):
-- Comprehensive documentation for the TinkerVM assembly language
-- A framework for implementing custom commands and extensions
+- A framework for implementing custom commands and extensions -- IN PROGRESS
+  - Create an interface for implementing custom instructions in the compiler and interpreter ✔️
+  - Convert native VM instructions to extensions for maximal customization ☐
+  - Release documentation for creating extensions ☐
 - Floating point support
 - File I/O support
 - System Calls
+- A TVM library
 
 # Getting Started:
 TinkerVM only relies on the C++ standard library with no external dependencies, and is configured using CMake, so to compile the executable, simply clone this repository and run the following commands:
