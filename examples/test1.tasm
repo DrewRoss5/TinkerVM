@@ -1,0 +1,8 @@
+newline: .stringz "\n"
+loadi r7 10
+loada r9 newline
+loop:
+addi r8 r8 1
+puti r8
+puts r9
+jlt r8 r7 loop
