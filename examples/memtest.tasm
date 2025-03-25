@@ -1,8 +1,0 @@
-my_str: .stringz "Hello, world!"
-num: .word
-loadi r7 10
-copy r8 r7
-loada r10 num
-stowi r10 1234
-loada r11 num
-loadw r12 r11

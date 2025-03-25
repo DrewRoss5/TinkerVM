@@ -1,3 +1,0 @@
-my_str: .stringz "Hello, world!"
-loada r9 my_str
-puts r9

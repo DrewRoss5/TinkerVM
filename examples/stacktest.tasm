@@ -1,8 +1,0 @@
-loadi r7 1234
-loadi r8 42
-pushb r8
-pushi 15
-push r7
-pop r10
-pop r11
-popb r9
