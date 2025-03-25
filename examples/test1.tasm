@@ -1,5 +1,5 @@
 newline: .stringz "\n"
-loadi r7 10
+loadi r7 100
 loada r9 newline
 loop:
 addi r8 r8 1

@@ -9,6 +9,13 @@
 #include "../inc/instruction.h"
 #include "../inc/machine.h"
 
+void exec_mem(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
+void exec_logic(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
+void exec_jump(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
+void exec_stack(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
+void exec_io(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
+void exec_heap(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
+
 // reads a string literal wrapped in quotations from a file
 std::string read_str(std::ifstream& file){
     std::unordered_map<char, char> escapes{
@@ -49,8 +56,16 @@ void Machine::split_registers(uint8_t registers, uint8_t& r1, uint8_t& r2){
     r1 >>= 4;
 }
 
-Machine::Machine(){
+Machine::Machine(bool init_default){
     this->registers.fill(0);
+    if (init_default){
+        this->add_extension(0x00, exec_mem);
+        this->add_extension(0x10, exec_logic);
+        this->add_extension(0x20, exec_jump);
+        this->add_extension(0x30, exec_stack);
+        this->add_extension(0x40, exec_io);
+        this->add_extension(0x50, exec_heap);
+    }
 }
 
 Machine::~Machine(){
@@ -69,18 +84,34 @@ uint64_t Machine::get_register(size_t reg_no){
     return this->registers[reg_no];
 }
 
+// adds a label to the machine
+void Machine::add_label(uint8_t* ptr){
+    this->labels.push_back(ptr);
+}
+
+// returns the pointer of a label at the given index
+uint8_t* Machine::get_label(size_t index){
+    if (index >= this->labels.size())
+        throw std::runtime_error("invalid label");
+    return this->labels[index];
+}
+
+// returns the program string at a given index
+std::string Machine::get_str(size_t index){
+    if (index >= this->prog_strings.size())
+        throw std::runtime_error("invalid string index");
+    return this->prog_strings[index];
+}
+
 // adds an extension and associates it with an operation family
 void Machine::add_extension(uint8_t op_family, void(*op)(Machine*, uint8_t, bool, uint8_t, uint64_t)){
-    // check if the operation family is inside the reserved range
-    if (op_family <= 0x50)
-        throw std::runtime_error("invalid operation family (reserved)");
     // check if the operation family is already implemented by another extension
-    if (this->extensions.count(op_family))
+    if (this->instruction_map.count(op_family))
         throw std::runtime_error("invalid operation family (in use by another extension)");
     // ensure the operation family can be stored in 3 bits
     if (op_family > 0x80)
         throw std::runtime_error("invalid operation family (out of range)");
-    this->extensions[op_family] = op;
+    this->instruction_map[op_family] = op;
 }
 
 // reads all the instructions from a bytecode file
@@ -134,39 +165,17 @@ void Machine::exec_inst(const Instruction& inst){
     // run the appropriate operation
     uint8_t op_type = (op_code & 0xE0) >> 1;
     op_code &= 0xfe;
-    op_code >>= 1;
-    switch (op_type){
-        case MEM_OP:
-            exec_mem(op_code, immediate, inst.registers, inst.extend);
-            break;
-        case LOGIC_OP:
-            exec_logic(op_code, immediate, inst.registers, inst.extend);
-            break;
-        case JUMP_OP:
-            exec_jump(op_code, immediate, inst.registers, inst.extend);
-            break;
-        case STACK_OP:
-            exec_stack(op_code, immediate, inst.registers, inst.extend);
-            break;
-        case IO_OP:
-            exec_io(op_code, immediate, inst.registers, inst.extend);
-            break;
-        case HEAP_OP:
-            exec_heap(op_code, immediate, inst.registers, inst.extend);
-            break;
-        default:
-            auto itt = this->extensions.find(op_type);
-            if (itt == this->extensions.end())
-                throw std::runtime_error("malformed binary (invalid operation)");
-            itt->second(this, op_code, immediate, inst.registers, inst.extend);
-            break;
-    }
+    op_code >>= 1;   
+    auto itt = this->instruction_map.find(op_type);
+    if (itt == this->instruction_map.end())
+        throw std::runtime_error("malformed binary (invalid operation)");
+    itt->second(this, op_code, immediate, inst.registers, inst.extend);
 }
 
 // executes a memory operation
-void Machine::exec_mem(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
-    uint8_t reg_1, reg_2, val;
-    uint64_t rhs, tmp;
+void exec_mem(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+    uint8_t reg_1, reg_2;
+    uint64_t rhs, tmp, val;
     uint8_t* ptr;
     size_t size;
     std::string str;
@@ -175,181 +184,192 @@ void Machine::exec_mem(uint8_t op_code, bool immediate, uint8_t registers, uint6
         rhs = extend;
     }
     else {
-        split_registers(registers, reg_1, reg_2);
-        rhs = this->registers[reg_2];
+        machine->split_registers(registers, reg_1, reg_2);
+        val = machine->get_register(reg_2);
     }
     switch (op_code){
         case COPY:
-            this->registers[reg_1] = this->registers[reg_2];
+            val = machine->get_register(reg_2);
+            machine->set_register(reg_1, val);
             break;
         case STORE_WORD:
             // copy rhs to the address stored in r2
-            ptr = reinterpret_cast<uint8_t*>(this->registers[reg_2]);
+            ptr = reinterpret_cast<uint8_t*>(machine->get_register(reg_2));
             std::memcpy(ptr, &rhs, 8);
             break;
         case STORE_BYTE:
             // store the rightmost byte of rhs to the address in r1
-            ptr = reinterpret_cast<uint8_t*>(this->registers[reg_1]);
-            rhs &= 0x000f;
+            ptr = reinterpret_cast<uint8_t*>(machine->get_register(reg_1));
+            rhs &= 0x0f;
             *ptr = rhs;
             break;
         case LOAD_WORD:
             if (immediate)
-                this->registers[reg_1] = rhs;
+                machine->set_register(reg_1, rhs);
             else{
                 // read in the word pointed to by reg_2
-                ptr = reinterpret_cast<uint8_t*>(this->registers[reg_2]);
-                std::memcpy(&(this->registers[reg_1]), ptr, 8);
+                ptr = reinterpret_cast<uint8_t*>(machine->get_register(reg_2));
+                std::memcpy(&val, ptr, 8);
+                machine->set_register(reg_1, val);
             }
             break;
         case LOAD_BYTE:
-            ptr = reinterpret_cast<uint8_t*>(this->registers[reg_2]);
+            ptr = reinterpret_cast<uint8_t*>(machine->get_register(reg_2));
             val = (*ptr) & 0x000f;
             break;
         case ALLOC_MEM:
             size = extend;
-            labels.push_back(new uint8_t[size]);
+            machine->add_label(new uint8_t(size));
             break;
         case ALLOC_STR:
-            str = prog_strings[extend];
+            str = machine->get_str(extend);
             // create a char array to the string
             ptr = new uint8_t[str.size()];
             std::copy(str.begin(), str.end(), ptr);
-            labels.push_back(ptr);
+            machine->add_label(ptr);
             break;
         case LOAD_ADDR:
-            tmp = reinterpret_cast<uint64_t>(this->labels[extend - 1]);
-            this->registers[reg_2] = tmp;
-            break;
-        default:
+            ptr = machine->get_label(extend - 1);
+            tmp = reinterpret_cast<uint64_t>(ptr);
+            machine->set_register(registers, tmp);
             break;
     }
 }
 
 // executes an arithmatic/logical operation
-void Machine::exec_logic(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+void exec_logic(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
     // parse the extent 
     uint8_t src_reg, dst_reg;
-    uint64_t rhs;
-    split_registers(registers, dst_reg, src_reg);
+    uint64_t rhs, lhs, res;
+    machine->split_registers(registers, dst_reg, src_reg);
+    lhs = machine->get_register(src_reg);
     // determine if the right hand side is stored in a register or is an immediate value
     if (immediate)
         rhs = extend;
     else
-        rhs = this->registers[extend];
+        rhs = machine->get_register(extend);
     // perfrom the given operation and store it to the destination register
     switch (op_code){
         case ADD:
-            this->registers[dst_reg] = this->registers[src_reg] + rhs;
+            res = lhs + rhs;
             break;
         case SUB:
-            this->registers[dst_reg] = this->registers[src_reg] - rhs;
+            res = lhs - rhs;
             break;
         case MUL:
-            this->registers[dst_reg] = this->registers[src_reg] * rhs;
+            res = lhs * rhs;
             break;
         case DIV:
-            this->registers[dst_reg] = this->registers[src_reg] / rhs;
+            res = lhs / rhs;
             break;
         case REM:
-            this->registers[dst_reg] = this->registers[src_reg] % rhs;
+            res = lhs % rhs;
             break;
         case COMP:
-            this->registers[dst_reg] = (this->registers[src_reg] == rhs);
+            res = lhs == rhs;
+            break;
         case AND:
-            this->registers[dst_reg] = this->registers[src_reg] & rhs;
+            res = lhs & rhs;
             break;
         case OR:
-            this->registers[dst_reg] = this->registers[src_reg] | rhs;
+            res = lhs | rhs;
             break;
         case XOR:
-            this->registers[dst_reg] = this->registers[src_reg] ^ rhs;
+            res = lhs ^ rhs;
             break;
         case SR:
-            this->registers[dst_reg] = this->registers[src_reg] >> rhs;
+            res = lhs >> rhs;
             break;
         case SL:
-            this->registers[dst_reg] = this->registers[src_reg] << rhs;
+            res = lhs << rhs;
             break;
     }
+    machine->set_register(dst_reg, res);
 }
 
 // execute a jump operation
-void Machine::exec_jump(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
-    uint8_t lhs,  rhs;
-    split_registers(registers, lhs, rhs);
+void exec_jump(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+    uint8_t r1,  r2;
+    if (op_code == JUMP){
+        machine->set_register(PROGRAM_COUNTER, extend);
+        return;
+    }
+    machine->split_registers(registers, r1,r2);
+    uint64_t lhs = machine->get_register(r1);
+    uint64_t rhs = machine->get_register(r2);
+    uint64_t tmp;
     // determine the operation to perform
     switch (op_code)
     {
-        case JUMP:
-            this->registers[PROGRAM_COUNTER] = extend;
-            break;
         case JEQ:
             // jump only if the registers are equal
-            if (this->registers[lhs] == this->registers[rhs])
-                this->registers[PROGRAM_COUNTER] = extend;
+            if (lhs == rhs)
+                machine->set_register(PROGRAM_COUNTER, extend);
             break;
         case JNE:
             // jump only if the registers are not equal
-            if (this->registers[lhs] != this->registers[rhs])
-                this->registers[PROGRAM_COUNTER] = extend;
+            if (lhs != rhs)
+                machine->set_register(PROGRAM_COUNTER, extend);
             break;
         case JGT:
             // jump only if the lhs is greater than rhs
-            if (this->registers[lhs] > this->registers[rhs])
-                this->registers[PROGRAM_COUNTER] = extend;
+            if (lhs > rhs)
+                machine->set_register(PROGRAM_COUNTER, extend);
             break;
         case JLT:
             // jump only if the lhs is greater than rhs
-            if (this->registers[lhs] < this->registers[rhs])
-                this->registers[PROGRAM_COUNTER] = extend;
+            if (lhs < rhs)
+                machine->set_register(PROGRAM_COUNTER, extend);
             break;
         case CAL:
             // store the current return address and jump to the function
-            this->registers[RET_ADDR] = this->registers[PROGRAM_COUNTER];
-            this->registers[PROGRAM_COUNTER] = extend;
+            tmp = machine->get_register(PROGRAM_COUNTER);
+            machine->set_register(RET_ADDR, tmp);
+            machine->set_register(PROGRAM_COUNTER, extend);
             break;
         case RET:
             // jumps to the current return address
-            this->registers[PROGRAM_COUNTER] = this->registers[RET_ADDR];
-            this->registers[RET_ADDR] = this->instruction_count + 1;
+            tmp = machine->get_register(RET_ADDR);
+            machine->set_register(PROGRAM_COUNTER, tmp);
+            machine->set_register(RET_ADDR, machine->get_inst_count());
             break;
     }
 }
 
-void Machine::exec_stack(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+void exec_stack(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
     uint8_t reg = registers & 0x0f;
     uint64_t rhs;
     if (immediate)
         rhs = extend;
     else
-        rhs = this->registers[reg];
+        rhs = machine->get_register(reg);
+    Stack stack = machine->get_stack();
+    uint64_t val;
     switch (op_code){
         case PUSH:
             // push the value of the register onto the stack
-            this->stack.push(rhs); 
+            stack.push(rhs); 
             break;
         case PUSH_B:
             // push the rightmost byte of the register onto the stack
-            this->stack.push(static_cast<uint8_t>(rhs & 0xff));
+            stack.push(static_cast<uint8_t>(rhs & 0xff));
             break;
         case POP:
-            if (this->stack.is_empty())
+            if (stack.is_empty())
                 throw std::runtime_error("no values on the stack to pop!");
-            this->registers[reg] = stack.pop_type<uint64_t>();
+            val = stack.pop_type<uint64_t>();
+            machine->set_register(reg, val);
             break;
         case POP_B:
-            if (this->stack.is_empty())
+            if (stack.is_empty())
                 throw std::runtime_error("no values on the stack to pop!");
-            this->registers[reg] = *stack.pop();
-            break;
-        default:
+            machine->set_register(reg, *stack.pop());
             break;
     }
 }
 
 // executes an IO operation
-void Machine::exec_io(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+void exec_io(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
     uint8_t reg = registers & 0x0f;
     uint8_t index;
     uint64_t input_int;
@@ -357,38 +377,38 @@ void Machine::exec_io(uint8_t op_code, bool immediate, uint8_t registers, uint64
     std::string input;
     switch (op_code){
         case PUT_S:
-            str = reinterpret_cast<const char*>(this->registers[reg]);
+            str = reinterpret_cast<const char*>(machine->get_register(reg));
             printf("%s", str);
             break;
         case PUT_I:
-            printf("%lu", this->registers[reg]);
+            printf("%lu", machine->get_register(reg));
             break;
         case GET_S:
             std::getline(std::cin, input);
-            this->prog_strings.push_back(input);
-            str = (prog_strings.end() - 1)->c_str();
-            this->registers[reg] = reinterpret_cast<uint64_t>(str);
+            machine->add_str(input);
+            str = input.c_str();
+            machine->set_register(reg, reinterpret_cast<uint64_t>(str));
             break;
         case GET_I:
             std::cin >> input_int;
-            this->registers[reg] = input_int;
+            machine->set_register(reg, input_int);
             break;
     }
 }
 
-void Machine::exec_heap(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
+void exec_heap(Machine *machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend){
     uint8_t* ptr;
     uint8_t reg, _;
-    split_registers(registers, reg, _);
+    machine->split_registers(registers, reg, _);
     switch (op_code){
         case HEAP_ALLOC:
             // allocate memory of the specified size and store the pointer in the desitnation register
             ptr = new uint8_t[extend];
-            this->registers[reg] = reinterpret_cast<uint64_t>(ptr);
+            machine->set_register(reg, reinterpret_cast<uint64_t>(ptr));
             break;
         case HEAP_FREE:
             // free the memory in the given register
-            ptr = reinterpret_cast<uint8_t*>(this->registers[reg]);
+            ptr = reinterpret_cast<uint8_t*>(machine->get_register(reg));
             delete ptr;
             break;
     }

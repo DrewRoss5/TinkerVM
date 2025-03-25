@@ -22,7 +22,7 @@ enum registers{
 
 class Machine{
     public:
-        Machine();
+        Machine(bool init_default = true);
         ~Machine();
         static void split_registers(uint8_t registers, uint8_t& r1, uint8_t& r2);
         uint64_t get_register(size_t reg_no);
@@ -31,19 +31,19 @@ class Machine{
         void exec_inst(const Instruction& inst);
         void set_register(size_t reg_no, uint64_t val);
         void add_extension(uint8_t op_family, void(*op)(Machine*, uint8_t, bool, uint8_t, uint64_t));
+        void add_label(uint8_t* ptr);
+        void add_str(const std::string& str) {this->prog_strings.push_back(str);}
+        uint8_t* get_label(size_t index);
+        std::string get_str(size_t index);
+        Stack& get_stack() {return this->stack;}
+        size_t get_inst_count() {return this->instruction_count;}
     private:
         void read_file(const std::string& file_path);     
-        void exec_mem(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
-        void exec_logic(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
-        void exec_jump(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
-        void exec_stack(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
-        void exec_io(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
-        void exec_heap(uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend);
         std::array<uint64_t, 16> registers;
         std::vector<uint8_t*> labels;
         std::vector<Instruction> instructions;
         std::vector<std::string> prog_strings;
-        std::unordered_map<uint8_t, void(*)(Machine*, uint8_t, bool, uint8_t, uint64_t)> extensions;
+        std::unordered_map<uint8_t, void(*)(Machine*, uint8_t, bool, uint8_t, uint64_t)> instruction_map;
         Stack stack;
         size_t instruction_count {0};
 };
