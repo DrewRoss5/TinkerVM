@@ -13,8 +13,8 @@ While TinkerVM is currently in the early stages of development, it is open for e
     - Simple I/O
 ### Planned Features (Project Roadmap):
 - A framework for implementing custom commands and extensions -- IN PROGRESS
-  - Create an interface for implementing custom instructions in the compiler and interpreter ✔️
-  - Convert native VM instructions to extensions for maximal customization ☐
+  - Create an interface for implementing custom instructions in the assembler and VM itself ☑️
+  - Convert native VM instructions to extensions for maximum customization ☑️
   - Release documentation for creating extensions ☐
 - Floating point support
 - File I/O support
