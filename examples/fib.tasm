@@ -1,0 +1,17 @@
+newline: .stringz "\n"
+prompt: .stringz "Number of iterations: "
+loada r7 prompt
+loada r15 newline
+puts r7
+geti r8
+loadi r9 0
+loadi r10 0
+loadi r11 1
+loop:
+puti r10
+puts r15
+add r12 r10 r11
+copy r10 r11
+copy r11 r12
+addi r9 r9 1
+jne r9 r8 loop
