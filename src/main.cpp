@@ -45,7 +45,7 @@ int main(int argc, char** argv){
             out = "out.tcode";
             if (argc == 4){
                 out = argv[3];
-                if (out.size() < 7 || out.substr(out.size() - 7) != ".tcode")
+                if (out.size() < 7 || out.substr(out.size() - 6) != ".tcode")
                     out.append(".tcode");
             }
             return assemble_prog(in, out);
