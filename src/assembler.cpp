@@ -284,8 +284,15 @@ Instruction Assembler::assemble_inst(const std::string& inst){
         return retval;
     }
     catch (std::runtime_error e){
+        // calculate the offset for the line number
+        int line_offset = 1;
+        for (auto itt : program_labels){
+            if (this->line_no < itt.second)
+                break;
+            line_offset++;
+        }
         std::stringstream error_msg;
-        error_msg << "Syntax error on line " << this->line_no + 1 << ": " << e.what();
+        error_msg << "Syntax error on line " << this->line_no + line_offset << ": " << e.what();
         throw std::runtime_error(error_msg.str());
     }
 }
@@ -295,7 +302,7 @@ Instruction Assembler::parse_mem(uint8_t op_code, const std::vector<std::string>
     Instruction retval;
     retval.op_code = op_code;
     if (operands.size() != 3)
-            throw std::runtime_error("invalid instruction");
+            throw std::runtime_error("Invalid instruction. Operation takes two operands.");
     // check if this is load address, which has different parsing logic than the other memory commands
     if ((op_code >> 1) == LOAD_ADDR){
         retval.registers = parse_reg(operands[1]);
@@ -352,7 +359,7 @@ Instruction Assembler::parse_logic(uint8_t op_code, const std::vector<std::strin
 // parses a stack instruction
 Instruction Assembler::parse_stack(uint8_t op_code, const std::vector<std::string>& operands){
     if (operands.size() != 2)
-        throw std::runtime_error("invalid instruction");
+        throw std::runtime_error("invalid instruction. Operation expects one operand");
     Instruction retval;
     retval.op_code = op_code;
     // we ignore the instruction bit when comparing operation codes
