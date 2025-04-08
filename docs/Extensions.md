@@ -52,4 +52,33 @@ Parses a pneumonic register number (for example, r7) and returns the represented
 Merges two registers into one 8-bit value, for conveinenty setting the `registers` value for the returned instruction.
 
 # Bytecode Instructions:
-Coming soon.
+Users are able to implement execution for custom bytecode instructions. These are reasonably straight forward to implement. As with pneumonic instructions, users must write a function that follows a specific prototype; the prototype for bytecode instructions is: `void(*op)(Machine* machine, uint8_t op_code, bool immediate, uint8_t registers, uint64_t extend)`. The following is a breakdown of each of the parameters: 
+
+<table>
+  <tr>
+    <th>Paramater:</th>
+    <th>Description:</th>
+  </tr>
+<tr>
+  <td><code>machine</code></td>
+  <td>A pointer to the virtual machine executing the instruction</td>
+</tr>
+<tr>
+  <td><code>op_code</code></td>
+  <td>The leftmost seven bits of the `op_code` memeber from the Instruction object being parsed</td>
+</tr>
+  <tr>
+    <td><code>immediate</code></td>
+    <td>A bool representing if the final bit of the op-coder is one or zero (one is true, zero is false)</td>
+  </tr>
+<tr>
+  <td><code>registers</code></td>
+  <td>Corresponds to the <code>registers</code> member of the <code>Instruction</code> struct.</td>
+</tr>
+<tr>
+  <td><code>extend</code></td>
+  <td>Correspond the the `extend` member of the <code>Instruction</code> struct.</td>
+</tr>
+</table>
+
+Unlike implementing pneumonic instructions, each execution function corresponds to the "family" of instructions, represented in the leftmost 3 bits of the instruction. For instance, `sub` and `add` are both handled by the same execution function, as they both belong to the `0x10` family of instructions. Once you have written your execution logic, call the `add_extension` function on the virtual machine that will run the bytecode in question, passing the instruction family as the first parameter, and the function pointer to your function in the second. (To use our earlier example: `my_machine.add_extension(0x01, &exec_logic);`
